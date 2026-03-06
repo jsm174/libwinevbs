@@ -1,0 +1,9 @@
+/build/
+/build-static/
+/out/
+/.vs/
+/.vscode/
+CMakeSettings.json
+.DS_Store
+wine/dlls/vbscript/parser.tab.c
+wine/dlls/vbscript/parser.tab.h

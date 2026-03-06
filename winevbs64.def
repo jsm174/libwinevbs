@@ -1,0 +1,66 @@
+LIBRARY "winevbs64.dll"
+EXPORTS
+; libwinevbs public API
+libwinevbs_init
+libwinevbs_shutdown
+
+; COM/OLE
+CoCreateInstance
+CoTaskMemAlloc
+
+; BSTR
+SysAllocString
+SysAllocStringLen
+SysFreeString
+SysStringLen
+
+; Variant
+VariantInit
+VariantClear
+VariantCopy
+VariantCopyInd
+VariantChangeType
+VariantChangeTypeEx
+
+; SafeArray
+SafeArrayCreate
+SafeArrayCreateVector
+SafeArrayDestroy
+SafeArrayGetElement
+SafeArrayPutElement
+SafeArrayGetLBound
+SafeArrayGetUBound
+SafeArrayGetDim
+SafeArrayAccessData
+SafeArrayUnaccessData
+
+; ATL
+AtlInternalQueryInterface
+
+; String conversion
+MultiByteToWideChar
+WideCharToMultiByte
+
+; VBScript
+VBScriptFactory_CreateInstance
+
+; CLSIDs
+CLSID_VBScript DATA
+CLSID_Dictionary DATA
+CLSID_FileSystemObject DATA
+CLSID_VBScriptRegExp DATA
+
+; IIDs
+IID_IUnknown DATA
+IID_IDispatch DATA
+IID_IActiveScript DATA
+IID_IActiveScriptDebug64 DATA
+IID_IActiveScriptSiteDebug64 DATA
+IID_IActiveScriptParse64 DATA
+IID_IEnumVARIANT DATA
+IID_IFont DATA
+IID_IFontDisp DATA
+IID_IProvideClassInfo DATA
+IID_IStorage DATA
+IID_IInternetHostSecurityManager DATA
+GUID_CUSTOM_CONFIRMOBJECTSAFETY DATA
