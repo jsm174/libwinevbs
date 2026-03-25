@@ -843,55 +843,7 @@
   *      DllGetClassObject (scrrun.@)
 --- wine/dlls/vbscript/compile.c
 +++ libwinevbs/dlls/vbscript/compile.c
-@@ -864,7 +864,7 @@
- static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
- {
-     statement_ctx_t loop_ctx = {2};
--    unsigned step_instr, body_label, instr;
-+    unsigned step_instr, instr;
-     BSTR identifier;
-     HRESULT hres;
- 
-@@ -909,28 +909,20 @@
-     if(!loop_ctx.for_end_label)
-         return E_OUTOFMEMORY;
- 
--    body_label = alloc_label(ctx);
--    if(!body_label)
--        return E_OUTOFMEMORY;
--
--    if(!emit_catch_jmp(ctx, 2, body_label))
--        return E_OUTOFMEMORY;
--
-     step_instr = push_instr(ctx, OP_step);
-     if(!step_instr)
-         return E_OUTOFMEMORY;
-     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
-     instr_ptr(ctx, step_instr)->arg1.uint = loop_ctx.for_end_label;
- 
--    if(!emit_catch_jmp(ctx, 0, loop_ctx.for_end_label))
-+    if(!emit_catch(ctx, 2))
-         return E_OUTOFMEMORY;
- 
--    label_set_addr(ctx, body_label);
--
-     hres = compile_statement(ctx, &loop_ctx, stat->body);
-     if(FAILED(hres))
-         return hres;
- 
-+    /* FIXME: Error handling can't be done compatible with native using OP_incc here. */
-     instr = push_instr(ctx, OP_incc);
-     if(!instr)
-         return E_OUTOFMEMORY;
-@@ -946,6 +938,7 @@
- 
-     label_set_addr(ctx, loop_ctx.for_end_label);
- 
-+    /* FIXME: reconsider after OP_incc fixup. */
-     if(!emit_catch(ctx, 0))
-         return E_OUTOFMEMORY;
- 
-@@ -1081,7 +1074,9 @@
+@@ -1074,7 +1074,9 @@
          break;
      case EXPR_CALL:
          call_expr = (call_expression_t*)left;
@@ -901,7 +853,7 @@
          member_expr = (member_expression_t*)call_expr->call_expr;
          break;
      default:
-@@ -1904,15 +1899,23 @@
+@@ -1897,15 +1899,23 @@
  
      for(i = 0; i < var_cnt; i++) {
          if(lookup_script_identifier(ctx, script, vars[i].name)) {
@@ -1222,16 +1174,6 @@
  {
      ScriptDisp *obj = ctx->script_obj;
      function_t *func_iter, **new_funcs;
---- wine/dlls/vbscript/vbscript_defs.h
-+++ libwinevbs/dlls/vbscript/vbscript_defs.h
-@@ -251,7 +251,6 @@
- #define VBSE_PATH_FILE_ACCESS              75
- #define VBSE_PATH_NOT_FOUND                76
- #define VBSE_OBJECT_VARIABLE_NOT_SET       91
--#define VBSE_FOR_LOOP_NOT_INITIALIZED     92
- #define VBSE_ILLEGAL_NULL_USE              94
- #define VBSE_CANT_CREATE_TMP_FILE         322
- #define VBSE_CANT_CREATE_OBJECT           429
 --- wine/dlls/vbscript/lex.c
 +++ libwinevbs/dlls/vbscript/lex.c
 @@ -94,6 +94,34 @@
@@ -1506,17 +1448,7 @@
  
      hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
      if(FAILED(hres))
-@@ -1434,9 +1488,6 @@
- 
-     TRACE("%s\n", debugstr_w(ident));
- 
--    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY)
--        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
--
-     V_VT(&zero) = VT_I2;
-     V_I2(&zero) = 0;
-     hres = VarCmp(stack_top(ctx, 0), &zero, ctx->script->lcid, 0);
-@@ -1671,6 +1722,20 @@
+@@ -1668,6 +1722,20 @@
      }else {
          named_item_t *item;
          disp = NULL;
@@ -1537,7 +1469,7 @@
          LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
              if(!(item->flags & SCRIPTITEM_GLOBALMEMBERS)) continue;
              disp = item->disp;
-@@ -1948,8 +2013,53 @@
+@@ -1945,8 +2013,53 @@
  {
      TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
  
@@ -1591,7 +1523,7 @@
      return VarCmp(l, r, ctx->script->lcid, 0);
   }
  
-@@ -2378,6 +2488,11 @@
+@@ -2375,6 +2488,11 @@
      HRESULT hres;
  
      TRACE("\n");
