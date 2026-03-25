@@ -3025,7 +3025,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         if(V_VT(args+1) != VT_BSTR) {
             hres = to_string(args+1, &delimiter);
             if(FAILED(hres))
-                goto error;
+                goto done;
         }else {
             delimiter = V_BSTR(args+1);
         }
@@ -3035,10 +3035,10 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     if(args_cnt > 2) {
         hres = to_int(args+2, &max);
         if(FAILED(hres))
-            goto error;
+            goto done;
         if (max < -1) {
             hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-            goto error;
+            goto done;
        }
     }else {
         max = -1;
@@ -3047,10 +3047,10 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     if(args_cnt == 4) {
         hres = to_int(args+3, &mode);
         if(FAILED(hres))
-            goto error;
+            goto done;
         if (mode != 0 && mode != 1) {
             hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
-            goto error;
+            goto done;
         }
     }else {
         mode = 0;
@@ -3059,12 +3059,22 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     start = 0;
 
     len = SysStringLen(string);
+
+    if(!len) {
+        bounds.lLbound = 0;
+        bounds.cElements = 0;
+        sa = SafeArrayCreate(VT_VARIANT, 1, &bounds);
+        if(!sa)
+            hres = E_OUTOFMEMORY;
+        goto done;
+    }
+
     count = 0;
 
     indices = malloc( indices_max * sizeof(int));
     if(!indices) {
         hres = E_OUTOFMEMORY;
-        goto error;
+        goto done;
     }
 
     while(1) {
@@ -3084,7 +3094,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
             new_indices = realloc(indices, indices_max * 2 * sizeof(int));
             if(!new_indices) {
                 hres = E_OUTOFMEMORY;
-                goto error;
+                goto done;
             }
             indices = new_indices;
             indices_max *= 2;
@@ -3101,11 +3111,11 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     sa = SafeArrayCreate( VT_VARIANT, 1, &bounds);
     if (!sa) {
         hres = E_OUTOFMEMORY;
-        goto error;
+        goto done;
     }
     hres = SafeArrayAccessData(sa, (void**)&data);
     if(FAILED(hres)) {
-        goto error;
+        goto done;
     }
 
     start = 0;
@@ -3121,7 +3131,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     }
     SafeArrayUnaccessData(sa);
 
-error:
+done:
     if(SUCCEEDED(hres) && res) {
         V_VT(res) = VT_ARRAY|VT_VARIANT;
         V_ARRAY(res) = sa;

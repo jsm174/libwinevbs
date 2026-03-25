@@ -58,7 +58,7 @@
  
  /* Eliminate Microsoft C/C++ compiler warning 4715 */
  #ifdef _MSC_VER
-@@ -2475,6 +2487,7 @@
+@@ -2576,6 +2588,7 @@
  
  struct _TEB;
  
@@ -66,7 +66,7 @@
  #ifdef WINE_UNIX_LIB
  # ifdef __GNUC__
  NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void) __attribute__((pure));
-@@ -2536,6 +2549,13 @@
+@@ -2637,6 +2650,13 @@
  #elif !defined(RC_INVOKED)
  # error You must define NtCurrentTeb() for your architecture
  #endif
@@ -80,22 +80,49 @@
  
  #ifdef NONAMELESSUNION
  #define GetCurrentFiber()  (((NT_TIB *)NtCurrentTeb())->u.FiberData)
-@@ -7532,6 +7552,7 @@
+@@ -7656,6 +7676,8 @@
  #endif
  }
  
++#ifdef __LIBWINVBS__
 +#ifndef __MINGW32__
  static FORCEINLINE DECLSPEC_NORETURN void __fastfail(unsigned int code)
  {
  #if defined(__x86_64__) || defined(__i386__)
-@@ -7544,6 +7565,7 @@
+@@ -7668,6 +7690,8 @@
      for (;;) __asm__ __volatile__( "udf #0xfb" :: "r" (val) : "memory" );
  #endif
  }
 +#endif
++#endif
  
  #endif  /* __GNUC__ */
  
+--- wine/include/wtypesbase.h
++++ libwinevbs/include/wtypesbase.h
+@@ -98,10 +98,12 @@
+ typedef double DECLSPEC_ALIGN(8) DOUBLE;
+ #endif
+ 
++#ifndef __LIBWINEVBS__
+ typedef unsigned char UCHAR;
+ typedef short SHORT;
+ typedef unsigned short USHORT;
+ typedef DWORD ULONG;
++#endif
+ #ifndef _DWORDLONG_
+ typedef UINT64 DWORDLONG;
+ typedef DWORDLONG *PDWORDLONG;
+@@ -384,7 +386,9 @@
+ #endif  /* __IWinTypesBase_INTERFACE_DEFINED__ */
+ 
+ 
++#ifndef __LIBWINEVBS__
+ typedef boolean BOOLEAN;
++#endif
+ #ifndef _tagBLOB_DEFINED
+ #define _tagBLOB_DEFINED
+ #define _BLOB_DEFINED
 --- wine/include/windef.h
 +++ libwinevbs/include/windef.h
 @@ -178,6 +178,15 @@
@@ -222,21 +249,23 @@
  /*
 --- wine/include/winbase.h
 +++ libwinevbs/include/winbase.h
-@@ -2621,11 +2621,13 @@
+@@ -2606,12 +2606,14 @@
      return strcat( dst, src );
  }
  
 +#ifndef __LIBWINEVBS__
  /* strncpy/wcsncpy don't do what you think, don't use them */
  #undef strncpy
- #undef wcsncpy
  #define strncpy(d,s,n) error do_not_use_strncpy_use_lstrcpynA_or_memcpy_instead
+ #ifdef __WINE_WCHAR_H
+ #undef wcsncpy
  #define wcsncpy(d,s,n) error do_not_use_wcsncpy_use_lstrcpynW_or_memcpy_instead
 +#endif
+ #endif
  
  #endif /* !defined(__WINESRC__) || defined(WINE_NO_INLINE_STRING) */
- 
 # libwinevbs-only: wine-afba987dda1430dc0d9f36fc6f27cd3584bce79e.patch
+# libwinevbs-only: wine-1dbc94083d1b508c3708c857b1715f9d379aa78a.patch
 --- wine/dlls/atl/atl.c
 +++ libwinevbs/dlls/atl/atl.c
 @@ -967,6 +967,7 @@
@@ -254,7 +283,7 @@
 +#endif
 --- wine/dlls/kernelbase/locale.c
 +++ libwinevbs/dlls/kernelbase/locale.c
-@@ -595,6 +595,7 @@
+@@ -594,6 +594,7 @@
  
  static const NLS_LOCALE_LCID_INDEX *find_lcid_entry( LCID lcid )
  {
@@ -262,7 +291,7 @@
      int min = 0, max = locale_table->nb_lcids - 1;
  
      while (min <= max)
-@@ -604,6 +605,7 @@
+@@ -603,6 +604,7 @@
          else if (lcid > lcids_index[pos].id) min = pos + 1;
          else return &lcids_index[pos];
      }
@@ -270,7 +299,7 @@
      return NULL;
  }
  
-@@ -661,6 +663,7 @@
+@@ -660,6 +662,7 @@
  
  static const struct sortguid *get_language_sort( const WCHAR *name )
  {
@@ -278,7 +307,7 @@
      const NLS_LOCALE_LCNAME_INDEX *entry;
      const NLS_LOCALE_DATA *locale;
      WCHAR guidstr[39];
-@@ -712,6 +715,9 @@
+@@ -711,6 +714,9 @@
      if (!ret) ret = &sort.guids[0];
      locale_sorts[entry - lcnames_index] = ret;
      return ret;
@@ -288,7 +317,7 @@
  }
  
  
-@@ -1628,7 +1634,11 @@
+@@ -1627,7 +1633,11 @@
  
      if (id != CAL_GREGORIAN && type != CAL_ITWODIGITYEARMAX)
      {
@@ -300,7 +329,7 @@
          for (i = 0; i < ids[0]; i++) if (ids[1 + i] == id) break;
          if (i == ids[0]) goto invalid;
      }
-@@ -2120,7 +2130,11 @@
+@@ -2119,7 +2129,11 @@
      if (pos >> 13)
      {
          if (get_char_props( norm_info, ch ) != 0xbf) return NULL;
@@ -312,7 +341,7 @@
          len = pos >> 13;
      }
      else
-@@ -2135,7 +2149,11 @@
+@@ -2134,7 +2148,11 @@
          for ( ; pos < end; pos++)
          {
              if (pairs[pos].src != (WCHAR)ch) continue;
@@ -324,7 +353,7 @@
              len = pairs[pos].dst >> 13;
              break;
          }
-@@ -2152,7 +2170,11 @@
+@@ -2151,7 +2169,11 @@
  static WCHAR compose_chars( WCHAR ch1, WCHAR ch2 )
  {
      const USHORT *table = (const USHORT *)norm_info + norm_info->comp_hash;
@@ -336,7 +365,7 @@
      unsigned int hash, start, end, i;
      WCHAR ch[3];
  
-@@ -2197,6 +2219,11 @@
+@@ -2196,6 +2218,11 @@
  {
      static const CPTABLEINFO utf7_cpinfo = { CP_UTF7, 5, '?', 0xfffd, '?', '?' };
      static const CPTABLEINFO utf8_cpinfo = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
@@ -348,7 +377,7 @@
      unsigned int i;
      USHORT *ptr;
      SIZE_T size;
-@@ -3830,6 +3857,7 @@
+@@ -3829,6 +3856,7 @@
  static int compare_string( const struct sortguid *sortid, DWORD flags,
                             const WCHAR *src1, int srclen1, const WCHAR *src2, int srclen2 )
  {
@@ -356,7 +385,7 @@
      struct sortkey_state s1;
      struct sortkey_state s2;
      BYTE primary1[32];
-@@ -3890,6 +3918,12 @@
+@@ -3889,6 +3917,12 @@
      free_sortkey_state( &s1 );
      free_sortkey_state( &s2 );
      return ret;
@@ -369,7 +398,7 @@
  }
  
  
-@@ -4332,7 +4366,11 @@
+@@ -4331,7 +4365,11 @@
      if (id == ENUM_ALL_CALENDARS)
      {
          count = locale_strings[locale->scalendartype];
@@ -381,7 +410,7 @@
      }
      else if (id <= CAL_UMALQURA)
      {
-@@ -4410,7 +4448,11 @@
+@@ -4409,7 +4447,11 @@
          return FALSE;
      }
  
@@ -393,7 +422,7 @@
  
      switch (flags & ~LOCALE_USE_CP_ACP)
      {
-@@ -4747,7 +4789,9 @@
+@@ -4746,7 +4788,9 @@
          return 0;
      }
  
@@ -403,7 +432,7 @@
  
      if (!str1 || !str2)
      {
-@@ -4865,6 +4909,7 @@
+@@ -4864,6 +4908,7 @@
      case LOCALE_CUSTOM_UI_DEFAULT:
          break;
      default:
@@ -411,7 +440,7 @@
          if (lcid == user_lcid || lcid == system_lcid) break;
          if (!(entry = find_lcid_entry( lcid )))
          {
-@@ -4873,6 +4918,7 @@
+@@ -4872,6 +4917,7 @@
              return 0;
          }
          locale = locale_strings + entry->name + 1;
@@ -419,7 +448,7 @@
          break;
      }
  
-@@ -5792,6 +5838,7 @@
+@@ -5791,6 +5837,7 @@
  BOOL WINAPI DECLSPEC_HOTPATCH GetFileMUIInfo( DWORD flags, const WCHAR *path,
                                                FILEMUIINFO *info, DWORD *size )
  {
@@ -427,7 +456,7 @@
      DWORD off, mui_size, type = MUI_FILETYPE_NOT_LANGUAGE_NEUTRAL;
      struct mui_resource *mui = NULL;
      HMODULE hmod;
-@@ -5946,6 +5993,9 @@
+@@ -5945,6 +5992,9 @@
  
      FreeLibrary( hmod );
      return TRUE;
@@ -853,7 +882,7 @@
          member_expr = (member_expression_t*)call_expr->call_expr;
          break;
      default:
-@@ -1897,15 +1899,23 @@
+@@ -2006,15 +2008,23 @@
  
      for(i = 0; i < var_cnt; i++) {
          if(lookup_script_identifier(ctx, script, vars[i].name)) {
@@ -1174,6 +1203,18 @@
  {
      ScriptDisp *obj = ctx->script_obj;
      function_t *func_iter, **new_funcs;
+--- wine/dlls/vbscript/vbscript_defs.h
++++ libwinevbs/dlls/vbscript/vbscript_defs.h
+@@ -252,6 +252,9 @@
+ #define VBSE_PATH_FILE_ACCESS              75
+ #define VBSE_PATH_NOT_FOUND                76
+ #define VBSE_OBJECT_VARIABLE_NOT_SET       91
++#ifdef __LIBWINEVBS__
++#define VBSE_FOR_LOOP_NOT_INITIALIZED      92
++#endif
+ #define VBSE_ILLEGAL_NULL_USE              94
+ #define VBSE_CANT_CREATE_TMP_FILE         322
+ #define VBSE_OBJECT_REQUIRED              424
 --- wine/dlls/vbscript/lex.c
 +++ libwinevbs/dlls/vbscript/lex.c
 @@ -94,6 +94,34 @@
@@ -1257,7 +1298,7 @@
          /* NOTE:
           * We resolve empty brackets in lexer instead of parser to avoid complex conflicts
 @@ -468,6 +510,55 @@
-         if(ctx->last_token == tIdentifier || ctx->last_token == ')')
+         if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME)
              return '(';
          return tEXPRLBRACKET;
 +#else
@@ -1281,7 +1322,7 @@
 +         * not call parens. Detect this when: identifier/')' precedes '(' with a space,
 +         * and a binary-only operator (*, /, \, ^, &) follows the matching ')'.
 +         */
-+        if(ctx->last_token == tIdentifier || ctx->last_token == ')') {
++        if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME) {
 +            if(paren_pos > ctx->code && (paren_pos[-1] == ' ' || paren_pos[-1] == '\t')
 +               && ctx->is_statement_ctx) {
 +                const WCHAR *p = ctx->ptr;
@@ -1355,7 +1396,7 @@
  }
 --- wine/dlls/vbscript/interp.c
 +++ libwinevbs/dlls/vbscript/interp.c
-@@ -629,6 +629,12 @@
+@@ -627,6 +627,12 @@
              return variant_call(ctx, ref.u.v, arg_cnt, res);
  
          if(!res) {
@@ -1368,38 +1409,7 @@
              FIXME("REF_VAR no res\n");
              return E_NOTIMPL;
          }
-@@ -649,12 +655,30 @@
-             return hres;
-         break;
-     case REF_OBJ:
-+#ifndef __LIBWINEVBS__
-         if(arg_cnt) {
-             FIXME("arguments on object\n");
-             return E_NOTIMPL;
-         }
-+#endif
- 
-         if(res) {
-+#ifdef __LIBWINEVBS__
-+            if (arg_cnt) {
-+                vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-+
-+                hres = IDispatch_Invoke(ref.u.obj, DISPID_VALUE, &IID_NULL,
-+                        LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &dp, res,
-+                            NULL, NULL);
-+
-+                if(FAILED(hres))
-+                    return hres;
-+
-+                IDispatch_AddRef(V_DISPATCH(res));
-+
-+                break;
-+            }
-+#endif
-             IDispatch_AddRef(ref.u.obj);
-             V_VT(res) = VT_DISPATCH;
-             V_DISPATCH(res) = ref.u.obj;
-@@ -809,6 +833,34 @@
+@@ -810,6 +816,34 @@
      return stack_push(ctx, &v);
  }
  
@@ -1434,7 +1444,7 @@
  static HRESULT assign_value(exec_ctx_t *ctx, VARIANT *dst, VARIANT *src, WORD flags)
  {
      VARIANT value;
-@@ -1331,11 +1383,13 @@
+@@ -1328,11 +1362,13 @@
          v = V_VARIANTREF(v);
      }
  
@@ -1448,7 +1458,7 @@
  
      hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
      if(FAILED(hres))
-@@ -1668,6 +1722,20 @@
+@@ -1663,6 +1699,20 @@
      }else {
          named_item_t *item;
          disp = NULL;
@@ -1469,7 +1479,7 @@
          LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
              if(!(item->flags & SCRIPTITEM_GLOBALMEMBERS)) continue;
              disp = item->disp;
-@@ -1945,8 +2013,53 @@
+@@ -1940,8 +1990,53 @@
  {
      TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
  
@@ -1523,14 +1533,14 @@
      return VarCmp(l, r, ctx->script->lcid, 0);
   }
  
-@@ -2375,6 +2488,11 @@
+@@ -2370,6 +2465,11 @@
      HRESULT hres;
  
      TRACE("\n");
 +
 +#ifdef __LIBWINEVBS__
 +    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY)
-+        return MAKE_VBSERROR(92);
++        return MAKE_VBSERROR(VBSE_FOR_LOOP_NOT_INITIALIZED);
 +#endif
  
      hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
@@ -1577,7 +1587,7 @@
  void release_named_item(named_item_t*);
 --- wine/dlls/vbscript/vbscript_main.c
 +++ libwinevbs/dlls/vbscript/vbscript_main.c
-@@ -39,7 +39,115 @@
+@@ -39,7 +39,124 @@
  BSTR get_vbscript_string(int id)
  {
      WCHAR buf[512];
@@ -1599,6 +1609,9 @@
 +            break;
 +        case VBSE_ARRAY_LOCKED:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_ARRAY_LOCKED");
++            break;
++        case VBSE_DIVISION_BY_ZERO:
++            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_DIVISION_BY_ZERO");
 +            break;
 +        case VBSE_TYPE_MISMATCH:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_TYPE_MISMATCH");
@@ -1630,11 +1643,17 @@
 +        case VBSE_OBJECT_VARIABLE_NOT_SET:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_OBJECT_VARIABLE_NOT_SET");
 +            break;
++        case VBSE_FOR_LOOP_NOT_INITIALIZED:
++            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_FOR_LOOP_NOT_INITIALIZED");
++            break;
 +        case VBSE_ILLEGAL_NULL_USE:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_ILLEGAL_NULL_USE");
 +            break;
 +        case VBSE_CANT_CREATE_TMP_FILE:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_CANT_CREATE_TMP_FILE");
++            break;
++        case VBSE_OBJECT_REQUIRED:
++            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_OBJECT_REQUIRED");
 +            break;
 +        case VBSE_CANT_CREATE_OBJECT:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_CANT_CREATE_OBJECT");
@@ -1693,7 +1712,7 @@
      return SysAllocString(buf);
  }
  
-@@ -258,6 +366,7 @@
+@@ -258,6 +375,7 @@
  /******************************************************************
   *              DllMain (vbscript.@)
   */
@@ -1701,7 +1720,7 @@
  BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  {
      TRACE("(%p %ld %p)\n", hInstDLL, fdwReason, lpv);
-@@ -276,10 +385,12 @@
+@@ -276,10 +394,12 @@
  
      return TRUE;
  }
@@ -1714,44 +1733,39 @@
  HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  {
      if(IsEqualGUID(&CLSID_VBScript, rclsid)) {
-@@ -293,3 +404,4 @@
+@@ -293,3 +413,4 @@
      FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
      return CLASS_E_CLASSNOTAVAILABLE;
  }
 +#endif
 --- wine/dlls/vbscript/parser.y
 +++ libwinevbs/dlls/vbscript/parser.y
-@@ -755,11 +755,22 @@
-     if(!arguments)
+@@ -773,9 +773,19 @@
          return call_expr;
  
-+#ifndef __LIBWINEVBS__
      if(arguments->type != EXPR_NOARG) {
++#ifdef __LIBWINEVBS__
          FIXME("Invalid syntax: missing comma\n");
          ctx->hres = E_FAIL;
          return NULL;
-     }
 +#else
-+    if(arguments->type != EXPR_NOARG) {
++        /* 'f (x) + expr, ...' — combine bracketed arg with the +/- expression. */
 +        expression_t *remaining = arguments->next;
 +        call_expr->args = new_binary_expression(ctx, EXPR_ADD, call_expr->args, arguments);
 +        if(!call_expr->args)
 +            return NULL;
 +        call_expr->args->next = remaining;
 +        return call_expr;
-+    }
 +#endif
+     }
  
      call_expr->args->next = arguments->next;
-     return call_expr;
-@@ -1225,6 +1236,10 @@
+@@ -1242,6 +1252,8 @@
      ctx->hres = S_OK;
      ctx->error_loc = -1;
      ctx->last_token = tNL;
-+#ifdef __LIBWINEVBS__
 +    ctx->is_statement_ctx = TRUE;
 +    ctx->paren_depth = 0;
-+#endif
      ctx->last_nl = 0;
      ctx->stats = ctx->stats_tail = NULL;
      ctx->class_decls = NULL;
@@ -2434,7 +2448,7 @@
  }
  
  static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-@@ -3075,6 +3373,7 @@
+@@ -3085,6 +3383,7 @@
  
  static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
  {
@@ -2442,7 +2456,7 @@
      union
      {
          struct
-@@ -3103,8 +3402,90 @@
+@@ -3113,8 +3412,90 @@
      if (FAILED(hres)) return hres;
  
      return return_bstr(res, str);
@@ -2533,7 +2547,7 @@
  static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
  {
      union
-@@ -3323,26 +3704,145 @@
+@@ -3333,26 +3714,145 @@
  
  static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
  {

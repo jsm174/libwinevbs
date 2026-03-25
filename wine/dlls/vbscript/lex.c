@@ -507,7 +507,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
          * Parser can't predict if bracket is part of argument expression or an argument
          * in call expression. We predict it here instead.
          */
-        if(ctx->last_token == tIdentifier || ctx->last_token == ')')
+        if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME)
             return '(';
         return tEXPRLBRACKET;
 #else
@@ -531,7 +531,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
          * not call parens. Detect this when: identifier/')' precedes '(' with a space,
          * and a binary-only operator (*, /, \, ^, &) follows the matching ')'.
          */
-        if(ctx->last_token == tIdentifier || ctx->last_token == ')') {
+        if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME) {
             if(paren_pos > ctx->code && (paren_pos[-1] == ' ' || paren_pos[-1] == '\t')
                && ctx->is_statement_ctx) {
                 const WCHAR *p = ctx->ptr;

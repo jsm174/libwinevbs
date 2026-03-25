@@ -58,6 +58,9 @@ BSTR get_vbscript_string(int id)
         case VBSE_ARRAY_LOCKED:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_ARRAY_LOCKED");
             break;
+        case VBSE_DIVISION_BY_ZERO:
+            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_DIVISION_BY_ZERO");
+            break;
         case VBSE_TYPE_MISMATCH:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_TYPE_MISMATCH");
             break;
@@ -88,11 +91,17 @@ BSTR get_vbscript_string(int id)
         case VBSE_OBJECT_VARIABLE_NOT_SET:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_OBJECT_VARIABLE_NOT_SET");
             break;
+        case VBSE_FOR_LOOP_NOT_INITIALIZED:
+            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_FOR_LOOP_NOT_INITIALIZED");
+            break;
         case VBSE_ILLEGAL_NULL_USE:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_ILLEGAL_NULL_USE");
             break;
         case VBSE_CANT_CREATE_TMP_FILE:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_CANT_CREATE_TMP_FILE");
+            break;
+        case VBSE_OBJECT_REQUIRED:
+            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_OBJECT_REQUIRED");
             break;
         case VBSE_CANT_CREATE_OBJECT:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_CANT_CREATE_OBJECT");
