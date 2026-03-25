@@ -964,8 +964,9 @@ BOOL WINAPI GetCursorPos(POINT *pt)
 
 UINT WINAPI GetCurrentDirectoryA(UINT buflen, LPSTR buf)
 {
-   getcwd(buf, buflen);
-   return 0;
+   if (!getcwd(buf, buflen))
+      return 0;
+   return strlen(buf);
 }
 
 BOOL WINAPI SetCurrentDirectoryA(LPCSTR buf)

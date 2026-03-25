@@ -659,27 +659,6 @@ typedef struct _TEB
 /***********************************************************************
  * The 32-bit/64-bit version of the PEB and TEB for WoW64
  */
-typedef struct _NT_TIB32
-{
-    ULONG ExceptionList;        /* 0000 */
-    ULONG StackBase;            /* 0004 */
-    ULONG StackLimit;           /* 0008 */
-    ULONG SubSystemTib;         /* 000c */
-    ULONG FiberData;            /* 0010 */
-    ULONG ArbitraryUserPointer; /* 0014 */
-    ULONG Self;                 /* 0018 */
-} NT_TIB32;
-
-typedef struct _NT_TIB64
-{
-    ULONG64 ExceptionList;        /* 0000 */
-    ULONG64 StackBase;            /* 0008 */
-    ULONG64 StackLimit;           /* 0010 */
-    ULONG64 SubSystemTib;         /* 0018 */
-    ULONG64 FiberData;            /* 0020 */
-    ULONG64 ArbitraryUserPointer; /* 0028 */
-    ULONG64 Self;                 /* 0030 */
-} NT_TIB64;
 
 typedef struct _CLIENT_ID32
 {
@@ -1820,6 +1799,24 @@ typedef struct _FILE_IO_COMPLETION_NOTIFICATION_INFORMATION {
 #define FILE_SKIP_SET_EVENT_ON_HANDLE        0x2
 #define FILE_SKIP_SET_USER_EVENT_ON_FAST_IO  0x4
 
+typedef struct _FILE_ID_EXTD_DIRECTORY_INFORMATION
+{
+    ULONG               NextEntryOffset;
+    ULONG               FileIndex;
+    LARGE_INTEGER       CreationTime;
+    LARGE_INTEGER       LastAccessTime;
+    LARGE_INTEGER       LastWriteTime;
+    LARGE_INTEGER       ChangeTime;
+    LARGE_INTEGER       EndOfFile;
+    LARGE_INTEGER       AllocationSize;
+    ULONG               FileAttributes;
+    ULONG               FileNameLength;
+    ULONG               EaSize;
+    ULONG               ReparsePointTag;
+    FILE_ID_128         FileId;
+    WCHAR               FileName[ANYSIZE_ARRAY];
+} FILE_ID_EXTD_DIRECTORY_INFORMATION, *PFILE_ID_EXTD_DIRECTORY_INFORMATION;
+
 typedef struct _FILE_ID_EXTD_BOTH_DIRECTORY_INFORMATION
 {
     ULONG               NextEntryOffset;
@@ -2451,8 +2448,11 @@ typedef enum _MEMORY_INFORMATION_CLASS {
     MemoryBadInformationAllProcesses = 13,
     MemoryImageExtensionInformation = 14,
 #ifdef __WINESRC__
-    MemoryWineUnixFuncs = 1000,
-    MemoryWineUnixWow64Funcs,
+    MemoryWineLoadUnixLib = 1000,
+    MemoryWineLoadUnixLibWow64,
+    MemoryWineLoadUnixLibByName,
+    MemoryWineLoadUnixLibByNameWow64,
+    MemoryWineUnloadUnixLib,
 #endif
 } MEMORY_INFORMATION_CLASS;
 
@@ -4809,7 +4809,7 @@ NTSYSAPI NTSTATUS  WINAPI NtSetInformationVirtualMemory(HANDLE,VIRTUAL_MEMORY_IN
 NTSYSAPI NTSTATUS  WINAPI NtSetIntervalProfile(ULONG,KPROFILE_SOURCE);
 NTSYSAPI NTSTATUS  WINAPI NtSetIoCompletion(HANDLE,ULONG_PTR,ULONG_PTR,NTSTATUS,SIZE_T);
 NTSYSAPI NTSTATUS  WINAPI NtSetIoCompletionEx(HANDLE,HANDLE,ULONG_PTR,ULONG_PTR,NTSTATUS,SIZE_T);
-NTSYSAPI NTSTATUS  WINAPI NtSetLdtEntries(ULONG,LDT_ENTRY,ULONG,LDT_ENTRY);
+NTSYSAPI NTSTATUS  WINAPI NtSetLdtEntries(ULONG,ULONG,ULONG,ULONG,ULONG,ULONG);
 NTSYSAPI NTSTATUS  WINAPI NtSetLowEventPair(HANDLE);
 NTSYSAPI NTSTATUS  WINAPI NtSetLowWaitHighEventPair(HANDLE);
 NTSYSAPI NTSTATUS  WINAPI NtSetLowWaitHighThread(VOID);
