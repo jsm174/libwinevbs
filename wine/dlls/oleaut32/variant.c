@@ -3079,6 +3079,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         goto VarAnd_Exit;
     }
 
+#ifndef __LIBWINEVBS__
     if (leftvt == VT_NULL || rightvt == VT_NULL)
     {
         /*
@@ -3129,6 +3130,98 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         V_VT(result) = resvt;
         goto VarAnd_Exit;
     }
+#else
+    if (leftvt == VT_NULL || rightvt == VT_NULL)
+    {
+        VARIANT *other;
+        VARTYPE  othervt;
+        BOOL     other_is_zero = FALSE;
+        BOOL     other_known = TRUE;
+
+        V_VT(result) = VT_NULL;
+        V_I8(result) = 0;
+
+        if (leftvt == VT_NULL && rightvt == VT_NULL)
+            goto VarAnd_Exit;
+
+        if (leftvt == VT_NULL) { other = right; othervt = rightvt; }
+        else                   { other = left;  othervt = leftvt;  }
+
+        switch (othervt)
+        {
+        case VT_EMPTY: other_is_zero = TRUE;                             break;
+        case VT_I1:    other_is_zero = (V_I1(other)   == 0);             break;
+        case VT_UI1:   other_is_zero = (V_UI1(other)  == 0);             break;
+        case VT_I2:    other_is_zero = (V_I2(other)   == 0);             break;
+        case VT_UI2:   other_is_zero = (V_UI2(other)  == 0);             break;
+        case VT_I4:    other_is_zero = (V_I4(other)   == 0);             break;
+        case VT_UI4:   other_is_zero = (V_UI4(other)  == 0);             break;
+        case VT_I8:    other_is_zero = (V_I8(other)   == 0);             break;
+        case VT_UI8:   other_is_zero = (V_UI8(other)  == 0);             break;
+        case VT_INT:   other_is_zero = (V_INT(other)  == 0);             break;
+        case VT_UINT:  other_is_zero = (V_UINT(other) == 0);             break;
+        case VT_BOOL:  other_is_zero = (V_BOOL(other) == VARIANT_FALSE); break;
+        case VT_R4:    other_is_zero = (V_R4(other)   == 0.0f);          break;
+        case VT_R8:    other_is_zero = (V_R8(other)   == 0.0);           break;
+        case VT_DATE:  other_is_zero = (V_DATE(other) == 0.0);           break;
+        case VT_CY:    other_is_zero = (V_CY(other).int64 == 0);         break;
+        case VT_DECIMAL:
+            other_is_zero = (V_DECIMAL(other).Hi32 == 0 &&
+                             V_DECIMAL(other).Lo64 == 0);
+            break;
+        case VT_BSTR:
+        {
+            VARIANT_BOOL b;
+            hres = VarBoolFromStr(V_BSTR(other), LOCALE_USER_DEFAULT,
+                                  VAR_LOCALBOOL, &b);
+            if (FAILED(hres))
+                goto VarAnd_Exit;
+            if (b == VARIANT_FALSE)
+            {
+                V_VT(result)   = VT_BOOL;
+                V_BOOL(result) = VARIANT_FALSE;
+            }
+            else
+            {
+                V_VT(result) = VT_NULL;
+                V_I8(result) = 0;
+            }
+            goto VarAnd_Exit;
+        }
+        default:
+            other_known = FALSE;
+            break;
+        }
+
+        if (!other_known || !other_is_zero)
+        {
+            V_VT(result) = VT_NULL;
+            V_I8(result) = 0;
+            goto VarAnd_Exit;
+        }
+
+        V_VT(result) = resvt;
+        switch (resvt)
+        {
+        case VT_BOOL: V_BOOL(result) = VARIANT_FALSE; break;
+        case VT_I1:   V_I1(result)   = 0;            break;
+        case VT_UI1:  V_UI1(result)  = 0;            break;
+        case VT_I2:   V_I2(result)   = 0;            break;
+        case VT_UI2:  V_UI2(result)  = 0;            break;
+        case VT_I4:   V_I4(result)   = 0;            break;
+        case VT_UI4:  V_UI4(result)  = 0;            break;
+        case VT_I8:   V_I8(result)   = 0;            break;
+        case VT_UI8:  V_UI8(result)  = 0;            break;
+        case VT_INT:  V_INT(result)  = 0;            break;
+        case VT_UINT: V_UINT(result) = 0;            break;
+        default:
+            V_VT(result) = VT_NULL;
+            V_I8(result) = 0;
+            break;
+        }
+        goto VarAnd_Exit;
+    }
+#endif
 
     hres = VariantCopy(&varLeft, left);
     if (FAILED(hres)) goto VarAnd_Exit;
