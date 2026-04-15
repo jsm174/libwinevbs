@@ -325,6 +325,8 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 
 - vbscript: Support element access on public array properties of class instances. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10383)
 - vbscript: Convert VT_DISPATCH arguments to string in Eval/Execute/ExecuteGlobal. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10600)
+- vbscript: Coerce VT_EMPTY operands before Var* calls. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10674)
+- oleaut32: Fix Null handling in three-valued logical ops. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10673)
 
 ### Enhancements
 

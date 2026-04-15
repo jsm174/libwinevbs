@@ -396,6 +396,9 @@ static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
 static inline HRESULT stack_push_null(exec_ctx_t *ctx)
 {
     VARIANT v;
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
     V_VT(&v) = VT_NULL;
     return stack_push(ctx, &v);
 }
@@ -1998,6 +2001,10 @@ static HRESULT interp_not(exec_ctx_t *ctx)
 
     TRACE("\n");
 
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
+
     hres = stack_pop_val(ctx, &val);
     if(FAILED(hres))
         return hres;
@@ -2017,6 +2024,10 @@ static HRESULT interp_and(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("\n");
+
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
 
     hres = stack_pop_val(ctx, &r);
     if(FAILED(hres))
@@ -2042,6 +2053,10 @@ static HRESULT interp_or(exec_ctx_t *ctx)
 
     TRACE("\n");
 
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
+
     hres = stack_pop_val(ctx, &r);
     if(FAILED(hres))
         return hres;
@@ -2065,6 +2080,10 @@ static HRESULT interp_xor(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("\n");
+
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
 
     hres = stack_pop_val(ctx, &r);
     if(FAILED(hres))
@@ -2090,6 +2109,10 @@ static HRESULT interp_eqv(exec_ctx_t *ctx)
 
     TRACE("\n");
 
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
+
     hres = stack_pop_val(ctx, &r);
     if(FAILED(hres))
         return hres;
@@ -2113,6 +2136,10 @@ static HRESULT interp_imp(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("\n");
+
+#ifdef __LIBWINEVBS__
+    VariantInit(&v);
+#endif
 
     hres = stack_pop_val(ctx, &r);
     if(FAILED(hres))
