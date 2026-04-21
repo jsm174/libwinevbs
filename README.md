@@ -332,6 +332,7 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 
 - vbscript: Use indexed lookup for global functions and variables. [11.7](https://gitlab.winehq.org/wine/wine/-/merge_requests/10546)
 - oleaut32: Add fast paths for VarAdd and VarCmp with integer operands. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10528)
+- vbscript: Fast-path assign_value for simple non-refcounted types. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10541)
 
 ## VBScript Quirks and Workarounds
 
