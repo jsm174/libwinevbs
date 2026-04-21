@@ -250,6 +250,9 @@ BSTR get_vbscript_string(int id)
         case VBSE_INVALID_EXIT:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_INVALID_EXIT");
             break;
+        case VBSE_INVALID_FOR_CONTROL:
+            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_INVALID_FOR_CONTROL");
+            break;
         case VBSE_NAME_REDEFINED:
             swprintf(buf, ARRAY_SIZE(buf), L"VBSE_NAME_REDEFINED");
             break;

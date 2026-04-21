@@ -2615,56 +2615,167 @@ static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 #endif
 }
 
-static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-#ifndef __LIBWINEVBS__
-    FIXME("\n");
-    return E_NOTIMPL;
-#else
-    SYSTEMTIME st;
-    BSTR interval;
+    BSTR interval = NULL;
+    int firstday = 0, firstweek = 0;
+    UDATE ud;
     DATE date;
-    HRESULT hr;
-
-    assert(2 <= args_cnt && args_cnt <= 4);
-
-    if (V_VT(arg) != VT_BSTR || V_VT(arg + 1) != VT_DATE)
-        return E_INVALIDARG;
-
-    interval = V_BSTR(arg);
-    date = V_DATE(arg + 1);
-
-    VariantTimeToSystemTime(date, &st);
-
+    VARIANT date_var;
+    HRESULT hres;
     int result;
-    if (!vbs_wcsicmp(interval, L"yyyy"))
-        result = st.wYear;
-    else if (!vbs_wcsicmp(interval, L"q"))
-        result = (st.wMonth - 1) / 3 + 1;
-    else if (!vbs_wcsicmp(interval, L"m"))
-        result = st.wMonth;
-    else if (!vbs_wcsicmp(interval, L"y"))
-        return E_NOTIMPL;
-    else if (!vbs_wcsicmp(interval, L"d"))
-        result = st.wDay;
-    else if (!vbs_wcsicmp(interval, L"w"))
-        return E_NOTIMPL;
-    else if (!vbs_wcsicmp(interval, L"ww"))
-        return E_NOTIMPL;
-    else if (!vbs_wcsicmp(interval, L"h"))
-        result = st.wHour;
-    else if (!vbs_wcsicmp(interval, L"n"))
-        result = st.wMinute;
-    else if (!vbs_wcsicmp(interval, L"s"))
-        result = st.wSecond;
+
+    TRACE("\n");
+
+    assert(args_cnt >= 2 && args_cnt <= 4);
+
+    if(V_VT(args) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(args_cnt >= 3)
+    {
+        if(V_VT(args + 2) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args + 2, &firstday);
+        if(FAILED(hres))
+            return hres;
+        if(firstday < 0 || firstday > 7)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    if(args_cnt >= 4)
+    {
+        if(V_VT(args + 3) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        hres = to_int(args + 3, &firstweek);
+        if(FAILED(hres))
+            return hres;
+        if(firstweek < 0 || firstweek > 3)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    if(V_VT(args + 1) == VT_NULL)
+        return return_null(res);
+
+    hres = to_string(args, &interval);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&date_var) = VT_EMPTY;
+    hres = VariantChangeType(&date_var, args + 1, 0, VT_DATE);
+    if(FAILED(hres))
+    {
+        SysFreeString(interval);
+        return hres;
+    }
+    date = V_DATE(&date_var);
+
+    hres = VarUdateFromDate(date, 0, &ud);
+    if(FAILED(hres))
+    {
+        SysFreeString(interval);
+        return hres;
+    }
+
+    /* Resolve firstdayofweek: 0 = system default, 1-7 = vbSunday-vbSaturday */
+    if(!firstday)
+    {
+        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK,
+                (LPWSTR)&firstday, sizeof(firstday) / sizeof(WCHAR));
+        firstday = (firstday + 1) % 7;
+    }
     else
-        return E_INVALIDARG;
+    {
+        firstday--;
+    }
 
-    V_VT(res) = VT_I4;
-    V_I4(res) = result;
+    /* Resolve firstweekofyear: 0 = system default */
+    if(!firstweek)
+    {
+        GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTWEEKOFYEAR,
+                (LPWSTR)&firstweek, sizeof(firstweek) / sizeof(WCHAR));
+        firstweek++;
+    }
 
-    return S_OK;
-#endif
+    if(!wcsicmp(interval, L"yyyy"))
+        result = ud.st.wYear;
+    else if(!wcsicmp(interval, L"q"))
+        result = (ud.st.wMonth - 1) / 3 + 1;
+    else if(!wcsicmp(interval, L"m"))
+        result = ud.st.wMonth;
+    else if(!wcsicmp(interval, L"y"))
+        result = ud.wDayOfYear;
+    else if(!wcsicmp(interval, L"d"))
+        result = ud.st.wDay;
+    else if(!wcsicmp(interval, L"w"))
+        result = 1 + (ud.st.wDayOfWeek - firstday + 7) % 7;
+    else if(!wcsicmp(interval, L"ww"))
+    {
+        int jan1_wday, jan1_pos, week1_start;
+
+        /* Day of week for Jan 1 of this year */
+        jan1_wday = (ud.st.wDayOfWeek - (ud.wDayOfYear - 1) % 7 + 7) % 7;
+        /* Position of Jan 1 within its week (0 = starts week, 6 = ends week) */
+        jan1_pos = (jan1_wday - firstday + 7) % 7;
+
+        switch(firstweek)
+        {
+        case 1: /* vbFirstJan1: week containing Jan 1 is week 1 */
+        default:
+            week1_start = 1 - jan1_pos;
+            break;
+        case 2: /* vbFirstFourDays: first week has >= 4 days in year */
+            week1_start = (jan1_pos <= 3) ? 1 - jan1_pos : 8 - jan1_pos;
+            break;
+        case 3: /* vbFirstFullWeek: first week is entirely in year */
+            week1_start = (jan1_pos == 0) ? 1 : 8 - jan1_pos;
+            break;
+        }
+
+        if(ud.wDayOfYear >= week1_start)
+        {
+            result = (ud.wDayOfYear - week1_start) / 7 + 1;
+        }
+        else
+        {
+            /* Date falls before week 1 — belongs to last week of previous year */
+            int prev_year = ud.st.wYear - 1;
+            int prev_days = (prev_year % 4 == 0 && (prev_year % 100 != 0 || prev_year % 400 == 0)) ? 366 : 365;
+            int jan1_prev_wday = (jan1_wday - prev_days % 7 + 7) % 7;
+            int jan1_prev_pos = (jan1_prev_wday - firstday + 7) % 7;
+            int prev_week1_start;
+
+            switch(firstweek)
+            {
+            case 1:
+            default:
+                prev_week1_start = 1 - jan1_prev_pos;
+                break;
+            case 2:
+                prev_week1_start = (jan1_prev_pos <= 3) ? 1 - jan1_prev_pos : 8 - jan1_prev_pos;
+                break;
+            case 3:
+                prev_week1_start = (jan1_prev_pos == 0) ? 1 : 8 - jan1_prev_pos;
+                break;
+            }
+            result = (prev_days - prev_week1_start) / 7 + 1;
+        }
+    }
+    else if(!wcsicmp(interval, L"h"))
+        result = ud.st.wHour;
+    else if(!wcsicmp(interval, L"n"))
+        result = ud.st.wMinute;
+    else if(!wcsicmp(interval, L"s"))
+        result = ud.st.wSecond;
+    else
+    {
+        WARN("Unrecognized interval %s.\n", debugstr_w(interval));
+        SysFreeString(interval);
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    }
+
+    SysFreeString(interval);
+    return return_short(res, result);
 }
 
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -3916,7 +4027,6 @@ static HRESULT Global_Unescape(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
     return S_OK;
 }
 
-#ifdef __LIBWINEVBS__
 static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
 {
     DISPPARAMS dp = {0};
@@ -3936,37 +4046,7 @@ static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
     VariantClear(&v);
     return hres;
 }
-#endif
 
-#ifndef __LIBWINEVBS__
-static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    vbscode_t *code;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) != VT_BSTR) {
-        if(res)
-            return VariantCopy(res, arg);
-        return S_OK;
-    }
-
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
-                          SCRIPTTEXT_ISEXPRESSION, FALSE, &code);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    if(is_exec_local_scope(This->ctx->current_exec)) {
-        This->ctx->caller_exec = This->ctx->current_exec;
-        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
-}
-#else
 static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR conv_str = NULL;
@@ -4004,44 +4084,7 @@ static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     return exec_global_code(This->ctx, code, res, FALSE);
 }
-#endif
 
-#ifndef __LIBWINEVBS__
-static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    vbscode_t *code;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) != VT_BSTR)
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
-                          0, TRUE, &code);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    if(is_exec_local_scope(This->ctx->current_exec)) {
-        unsigned i;
-
-        /* Pre-register Dim variables in the caller's scope */
-        for(i = 0; i < code->main_code.var_cnt; i++) {
-            hres = exec_add_caller_dynamic_var(This->ctx, This->ctx->current_exec,
-                                               code->main_code.vars[i].name);
-            if(FAILED(hres))
-                return hres;
-        }
-
-        This->ctx->caller_exec = This->ctx->current_exec;
-        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
-}
-#else
 static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR conv_str = NULL;
@@ -4087,29 +4130,7 @@ static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt
 
     return exec_global_code(This->ctx, code, res, FALSE);
 }
-#endif
 
-#ifndef __LIBWINEVBS__
-static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-{
-    vbscode_t *code;
-    HRESULT hres;
-
-    TRACE("%s\n", debugstr_variant(arg));
-
-    if(V_VT(arg) != VT_BSTR)
-        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-
-    hres = compile_script(This->ctx, V_BSTR(arg), NULL, NULL, 0, 0,
-                          0, TRUE, &code);
-    if(FAILED(hres)) {
-        clear_error_loc(This->ctx);
-        return hres;
-    }
-
-    return exec_global_code(This->ctx, code, res, FALSE);
-}
-#else
 static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     BSTR conv_str = NULL;
@@ -4140,7 +4161,6 @@ static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned ar
 
     return exec_global_code(This->ctx, code, res, FALSE);
 }
-#endif
 
 static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
