@@ -2207,59 +2207,37 @@ static HRESULT interp_imp(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static inline BOOL is_numeric_vt(VARTYPE vt)
+{
+    return vt == VT_I2 || vt == VT_I4 || vt == VT_R4 || vt == VT_R8
+        || vt == VT_CY || vt == VT_DATE || vt == VT_UI1;
+}
+
 static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
 {
     TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
 
-#ifndef __LIBWINEVBS__
-    /* FIXME: Fix comparing string to number */
-#else
-    VARTYPE lvt, rvt;
-    VARIANT left, right;
-    HRESULT hres;
+    /* VarCmp would use string comparison; VBScript converts the string to a number. */
+    if((V_VT(l) == VT_BSTR && is_numeric_vt(V_VT(r))) ||
+       (V_VT(r) == VT_BSTR && is_numeric_vt(V_VT(l)))) {
+        double dl, dr;
+        HRESULT hres;
 
-    lvt = V_VT(l) & VT_TYPEMASK;
-    rvt = V_VT(r) & VT_TYPEMASK;
-
-    if((lvt == VT_BSTR && (rvt == VT_I1 || rvt == VT_I2 || rvt == VT_I4 || rvt == VT_I8 ||
-                           rvt == VT_UI1 || rvt == VT_UI2 || rvt == VT_UI4 || rvt == VT_UI8 ||
-                           rvt == VT_R4 || rvt == VT_R8 || rvt == VT_CY || rvt == VT_DECIMAL ||
-                           rvt == VT_BOOL || rvt == VT_DATE || rvt == VT_INT || rvt == VT_UINT)) ||
-       (rvt == VT_BSTR && (lvt == VT_I1 || lvt == VT_I2 || lvt == VT_I4 || lvt == VT_I8 ||
-                           lvt == VT_UI1 || lvt == VT_UI2 || lvt == VT_UI4 || lvt == VT_UI8 ||
-                           lvt == VT_R4 || lvt == VT_R8 || lvt == VT_CY || lvt == VT_DECIMAL ||
-                           lvt == VT_BOOL || lvt == VT_DATE || lvt == VT_INT || lvt == VT_UINT))) {
-        V_VT(&left) = VT_EMPTY;
-        hres = VariantCopy(&left, l);
+        hres = to_double(l, &dl);
         if(FAILED(hres))
             return hres;
-
-        V_VT(&right) = VT_EMPTY;
-        hres = VariantCopy(&right, r);
-        if(FAILED(hres)) {
-            VariantClear(&left);
+        hres = to_double(r, &dr);
+        if(FAILED(hres))
             return hres;
-        }
-
-        /* By setting VT_RESERVED on only the numeric operand when comparing string-to-number,
-           trigger VarCmp's path that attempts to convert the string to a number for numeric comparison,
-           which succeeds for valid numeric strings like "123" but fails with a type mismatch error
-           for empty "" or invalid strings like "abc". */
-
-        if(lvt == VT_BSTR)
-            V_VT(&right) |= VT_RESERVED;
-        else
-            V_VT(&left) |= VT_RESERVED;
-
-        hres = VarCmp(&left, &right, ctx->script->lcid, 0);
-        VariantClear(&left);
-        VariantClear(&right);
-        return hres;
+        if(dl < dr)
+            return VARCMP_LT;
+        if(dl > dr)
+            return VARCMP_GT;
+        return VARCMP_EQ;
     }
-#endif
 
     return VarCmp(l, r, ctx->script->lcid, 0);
- }
+}
 
 static HRESULT cmp_oper(exec_ctx_t *ctx)
 {
@@ -2402,8 +2380,13 @@ static HRESULT interp_case(exec_ctx_t *ctx)
 
     hres = var_cmp(ctx, stack_top(ctx, 0), v.v);
     release_val(&v);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        if(hres == DISP_E_TYPEMISMATCH) {
+            ctx->instr++;
+            return S_OK;
+        }
         return hres;
+    }
 
     if(hres == VARCMP_EQ) {
         stack_popn(ctx, 1);
@@ -2839,11 +2822,6 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     vbsop_t op;
     HRESULT hres = S_OK;
 
-    if(!extern_caller && ctx->call_depth++ >= max_call_depth) {
-        ctx->call_depth--;
-        return MAKE_VBSERROR(VBSE_OUT_OF_STACK);
-    }
-
     exec.code = func->code_ctx;
     exec.caller = ctx->caller_exec;
     ctx->caller_exec = NULL;
@@ -2902,6 +2880,15 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     if(!exec.stack) {
         release_exec(&exec);
         return E_OUTOFMEMORY;
+    }
+
+    /* Recursion guard. Counted only once setup has succeeded so the
+     * single decrement at the bottom always pairs with this. Adding new
+     * early returns above this point can't desync the counter. */
+    if(!extern_caller && ctx->call_depth++ >= max_call_depth) {
+        ctx->call_depth--;
+        release_exec(&exec);
+        return MAKE_VBSERROR(VBSE_OUT_OF_STACK);
     }
 
     if(extern_caller)

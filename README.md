@@ -283,6 +283,7 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 - [Bug 53888](https://bugs.winehq.org/show_bug.cgi?id=53888) — vbscript does not allow Mid on non VT_BSTR [7.21](https://gitlab.winehq.org/wine/wine/-/merge_requests/1288)
 - [Bug 53889](https://bugs.winehq.org/show_bug.cgi?id=53889) — does not support Get_Item call on IDispatch objects [11.5](https://gitlab.winehq.org/wine/wine/-/merge_requests/10367)
 - [Bug 53962](https://bugs.winehq.org/show_bug.cgi?id=53962) — vbscript does not Eval implemented [11.6](https://gitlab.winehq.org/wine/wine/-/merge_requests/10368)
+- [Bug 54177](https://bugs.winehq.org/show_bug.cgi?id=54177) — vbscript: Fix Sub first argument parentheses handling. [11.8](https://gitlab.winehq.org/wine/wine/-/merge_requests/10692)
 - [Bug 54221](https://bugs.winehq.org/show_bug.cgi?id=54221) — vbscript: missing support for GetRef [11.6](https://gitlab.winehq.org/wine/wine/-/merge_requests/10444)
 - [Bug 54234](https://bugs.winehq.org/show_bug.cgi?id=54234) — vbscript fails to compile when colon follows Else in If...Else [8.2](https://gitlab.winehq.org/wine/wine/-/merge_requests/2142)
 - [Bug 54291](https://bugs.winehq.org/show_bug.cgi?id=54291) — stuck in endless for loop when UBound on Empty and On Error Resume Next [11.7](https://gitlab.winehq.org/wine/wine/-/merge_requests/10366)
@@ -303,6 +304,7 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 - [Bug 55931](https://bugs.winehq.org/show_bug.cgi?id=55931) — vbscript: empty MOD 100000 returns garbage instead of 0 [9.0-rc1](https://gitlab.winehq.org/wine/wine/-/merge_requests/4515)
 - [Bug 55969](https://bugs.winehq.org/show_bug.cgi?id=55969) — vbscript fails to return TypeName for Nothing [9.0-rc1](https://gitlab.winehq.org/wine/wine/-/merge_requests/4564)
 - [Bug 56139](https://bugs.winehq.org/show_bug.cgi?id=56139) — scrrun: Dictionary does not allow storing at key Undefined [9.3](https://gitlab.winehq.org/wine/wine/-/merge_requests/4778)
+- [Bug 56281](https://bugs.winehq.org/show_bug.cgi?id=56281) — string number converted to ascii value instead of parsed value [11.8](https://gitlab.winehq.org/wine/wine/-/merge_requests/10314)
 - [Bug 56464](https://bugs.winehq.org/show_bug.cgi?id=56464) — vbscript: Join on array with "empty" items fails [10.2](https://gitlab.winehq.org/wine/wine/-/merge_requests/7304)
 - [Bug 56480](https://bugs.winehq.org/show_bug.cgi?id=56480) — underscore line continue issues [11.5](https://gitlab.winehq.org/wine/wine/-/merge_requests/10312)
 - [Bug 56781](https://bugs.winehq.org/show_bug.cgi?id=56781) — scrrun: Dictionary setting item to object fails [9.11](https://gitlab.winehq.org/wine/wine/-/merge_requests/5795)
@@ -317,9 +319,7 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 ### Open Defects
 
 - [Bug 53877](https://bugs.winehq.org/show_bug.cgi?id=53877) — compile_assignment assertion when assigning multidimensional array by indices [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10363)
-- [Bug 54177](https://bugs.winehq.org/show_bug.cgi?id=54177) — vbscript: Fix Sub first argument parentheses handling. [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10244) [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10692)
 - [Bug 56280](https://bugs.winehq.org/show_bug.cgi?id=56280) — string coerced to Integer instead of Long [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/8635)
-- [Bug 56281](https://bugs.winehq.org/show_bug.cgi?id=56281) — string number converted to ascii value instead of parsed value [MR](https://gitlab.winehq.org/wine/wine/-/merge_requests/10314)
 
 ### Implemented MRs (without bug reports)
 
