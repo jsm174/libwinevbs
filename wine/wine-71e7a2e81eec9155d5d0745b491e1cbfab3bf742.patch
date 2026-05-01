@@ -1,4 +1,4 @@
-# libwinevbs-only: wine-6e073d28dee3af7f4c965daec94644e0f9f92727.patch
+# libwinevbs-only: wine-71e7a2e81eec9155d5d0745b491e1cbfab3bf742.patch
 --- wine/include/winternl.h
 +++ libwinevbs/include/winternl.h
 @@ -21,7 +21,22 @@
@@ -466,6 +466,24 @@
  }
  
  
+@@ -6716,6 +6766,7 @@
+  */
+ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
+ {
++#ifndef __LIBWINEVBS__
+     switch (lcid)
+     {
+     case LOCALE_NEUTRAL:
+@@ -6725,6 +6776,9 @@
+     default:
+         return !!NlsValidateLocale( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
+     }
++#else
++    return TRUE;
++#endif
+ }
+ 
+ 
 --- wine/dlls/scrrun/dictionary.c
 +++ libwinevbs/dlls/scrrun/dictionary.c
 @@ -188,10 +188,12 @@
@@ -529,7 +547,7 @@
 # libwinevbs-only: dlls/scrrun/dictionary_proxy.c
 --- wine/dlls/scrrun/filesystem.c
 +++ libwinevbs/dlls/scrrun/filesystem.c
-@@ -352,8 +352,13 @@
+@@ -354,8 +354,13 @@
      return get_typeinfo(ITextStream_tid, ppTInfo);
  }
  
@@ -543,7 +561,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -370,10 +375,17 @@
+@@ -372,10 +377,17 @@
  
      return hr;
  }
@@ -561,7 +579,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -392,6 +404,7 @@
+@@ -394,6 +406,7 @@
  
      return hr;
  }
@@ -569,7 +587,7 @@
  
  static HRESULT WINAPI textstream_get_Line(ITextStream *iface, LONG *line)
  {
-@@ -1055,8 +1068,13 @@
+@@ -1057,8 +1070,13 @@
      return get_typeinfo(IDrive_tid, ppTInfo);
  }
  
@@ -583,7 +601,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -1073,10 +1091,17 @@
+@@ -1075,10 +1093,17 @@
  
      return hr;
  }
@@ -601,7 +619,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -1095,6 +1120,7 @@
+@@ -1097,6 +1122,7 @@
  
      return hr;
  }
@@ -609,7 +627,7 @@
  
  static HRESULT WINAPI drive_get_Path(IDrive *iface, BSTR *path)
  {
-@@ -1888,8 +1914,13 @@
+@@ -1890,8 +1916,13 @@
      return get_typeinfo(IFolderCollection_tid, ppTInfo);
  }
  
@@ -623,7 +641,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -1906,10 +1937,17 @@
+@@ -1908,10 +1939,17 @@
  
      return hr;
  }
@@ -641,7 +659,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -1928,6 +1966,7 @@
+@@ -1930,6 +1968,7 @@
  
      return hr;
  }
@@ -649,7 +667,7 @@
  
  static HRESULT WINAPI foldercoll_Add(IFolderCollection *iface, BSTR name, IFolder **folder)
  {
-@@ -2090,7 +2129,12 @@
+@@ -2092,7 +2131,12 @@
      return get_typeinfo(IFileCollection_tid, ppTInfo);
  }
  
@@ -662,7 +680,7 @@
                                          LPOLESTR *rgszNames, UINT cNames,
                                          LCID lcid, DISPID *rgDispId)
  {
-@@ -2108,8 +2152,15 @@
+@@ -2110,8 +2154,15 @@
  
      return hr;
  }
@@ -678,7 +696,7 @@
                                        REFIID riid, LCID lcid, WORD wFlags,
                                        DISPPARAMS *pDispParams, VARIANT *pVarResult,
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
-@@ -2130,6 +2181,7 @@
+@@ -2132,6 +2183,7 @@
  
      return hr;
  }
@@ -686,7 +704,7 @@
  
  static HRESULT WINAPI filecoll_get_Item(IFileCollection *iface, VARIANT Key, IFile **file)
  {
-@@ -2280,8 +2332,13 @@
+@@ -2282,8 +2334,13 @@
      return get_typeinfo(IDriveCollection_tid, ppTInfo);
  }
  
@@ -700,7 +718,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2298,10 +2355,17 @@
+@@ -2300,10 +2357,17 @@
  
      return hr;
  }
@@ -718,7 +736,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2320,6 +2384,7 @@
+@@ -2322,6 +2386,7 @@
  
      return hr;
  }
@@ -726,7 +744,7 @@
  
  static HRESULT WINAPI drivecoll_get_Item(IDriveCollection *iface, VARIANT key, IDrive **drive)
  {
-@@ -2454,8 +2519,13 @@
+@@ -2456,8 +2521,13 @@
      return get_typeinfo(IFolder_tid, ppTInfo);
  }
  
@@ -740,7 +758,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2472,10 +2542,17 @@
+@@ -2474,10 +2544,17 @@
  
      return hr;
  }
@@ -758,7 +776,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2494,6 +2571,7 @@
+@@ -2496,6 +2573,7 @@
  
      return hr;
  }
@@ -766,7 +784,7 @@
  
  static HRESULT WINAPI folder_get_Path(IFolder *iface, BSTR *path)
  {
-@@ -2894,7 +2972,11 @@
+@@ -2964,7 +3042,11 @@
      return get_typeinfo(IFile_tid, ppTInfo);
  }
  
@@ -778,7 +796,7 @@
          LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2910,8 +2992,13 @@
+@@ -2980,8 +3062,13 @@
      }
      return hr;
  }
@@ -792,7 +810,7 @@
          DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2929,6 +3016,7 @@
+@@ -2999,6 +3086,7 @@
      }
      return hr;
  }
@@ -800,15 +818,7 @@
  
  static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *path)
  {
-@@ -3025,6 +3113,7 @@
-     hr = create_folder(parent_path, ppfolder);
-     free(parent_path);
-     return hr;
-+
- }
- 
- static HRESULT WINAPI file_get_Attributes(IFile *iface, FileAttribute *pfa)
-@@ -3316,8 +3405,13 @@
+@@ -3434,8 +3522,13 @@
      return get_typeinfo(IFileSystem3_tid, ppTInfo);
  }
  
@@ -822,7 +832,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -3334,10 +3428,17 @@
+@@ -3452,10 +3545,17 @@
  
      return hr;
  }
@@ -840,7 +850,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -3356,6 +3457,7 @@
+@@ -3474,6 +3574,7 @@
  
      return hr;
  }
@@ -848,7 +858,7 @@
  
  static HRESULT WINAPI filesys_get_Drives(IFileSystem3 *iface, IDriveCollection **ppdrives)
  {
-@@ -4354,3 +4456,7 @@
+@@ -4472,3 +4573,7 @@
      init_classinfo(&CLSID_FileSystemObject, (IUnknown *)&filesystem.IFileSystem3_iface, &filesystem.classinfo);
      return IFileSystem3_QueryInterface(&filesystem.IFileSystem3_iface, riid, ppv);
  }
@@ -877,7 +887,7 @@
   *      DllGetClassObject (scrrun.@)
 --- wine/dlls/vbscript/compile.c
 +++ libwinevbs/dlls/vbscript/compile.c
-@@ -1140,7 +1140,9 @@
+@@ -1164,7 +1164,9 @@
          break;
      case EXPR_CALL:
          call_expr = (call_expression_t*)left;
@@ -887,7 +897,7 @@
          member_expr = (member_expression_t*)call_expr->call_expr;
          break;
      default:
-@@ -2086,13 +2088,21 @@
+@@ -2146,13 +2148,21 @@
  
      for(i = 0; i < var_cnt; i++) {
          if(lookup_script_identifier(ctx, script, vars[i].name)) {
@@ -911,119 +921,7 @@
  
 --- wine/dlls/vbscript/vbdisp.c
 +++ libwinevbs/dlls/vbscript/vbdisp.c
-@@ -146,6 +146,23 @@
-     return S_OK;
- }
- 
-+#ifdef __LIBWINEVBS__
-+static HRESULT get_array_from_variant(VARIANT *v, SAFEARRAY **array)
-+{
-+    switch(V_VT(v)) {
-+    case VT_ARRAY|VT_BYREF|VT_VARIANT:
-+        *array = *V_ARRAYREF(v);
-+        break;
-+    case VT_ARRAY|VT_VARIANT:
-+        *array = V_ARRAY(v);
-+        break;
-+    default:
-+        return E_FAIL;
-+    }
-+    return S_OK;
-+}
-+#endif
-+
- static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
- {
-     HRESULT hres;
-@@ -154,6 +171,7 @@
-     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
-     case DISPATCH_PROPERTYGET:
-         if(dp->cArgs) {
-+#ifndef __LIBWINEVBS__
-             if (!V_ISARRAY(v))
-             {
-                 WARN("called with arguments for non-array property\n");
-@@ -165,6 +183,27 @@
-                 WARN("failed to access array element\n");
-                 return hres;
-             }
-+#else
-+            SAFEARRAY *array;
-+
-+            if (!V_ISARRAY(v))
-+            {
-+                WARN("called with arguments for non-array property\n");
-+                return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
-+            }
-+
-+            if(FAILED(hres = get_array_from_variant(v, &array)))
-+            {
-+                FIXME("Unsupported array type %x\n", V_VT(v));
-+                return hres;
-+            }
-+
-+            if (FAILED(hres = array_access(array, dp, &v)))
-+            {
-+                WARN("failed to access array element\n");
-+                return hres;
-+            }
-+#endif
-         }
- 
-         hres = VariantCopyInd(res, v);
-@@ -181,17 +220,51 @@
-             return hres;
- 
-         if(arg_cnt(dp)) {
-+#ifndef __LIBWINEVBS__
-             FIXME("Arguments not supported\n");
-             return E_NOTIMPL;
-+#else
-+            SAFEARRAY *array;
-+
-+            if(!V_ISARRAY(v)) {
-+                FIXME("Arguments not supported for type %x\n", V_VT(v));
-+                if(own_val)
-+                    VariantClear(&put_val);
-+                return E_NOTIMPL;
-+            }
-+
-+            if(FAILED(hres = get_array_from_variant(v, &array))) {
-+                FIXME("Unsupported array type %x\n", V_VT(v));
-+                if(own_val)
-+                    VariantClear(&put_val);
-+                return hres;
-+            }
-+
-+            hres = array_access(array, dp, &v);
-+            if(FAILED(hres)) {
-+                if(own_val)
-+                    VariantClear(&put_val);
-+                return hres;
-+            }
-+#endif
-         }
- 
-         if(res)
-             V_VT(res) = VT_EMPTY;
- 
-+#ifndef __LIBWINEVBS__
-         if(own_val)
-             *v = put_val;
-         else
-             hres = VariantCopyInd(v, &put_val);
-+#else
-+        if(own_val) {
-+            VariantClear(v);
-+            *v = put_val;
-+        } else {
-+            hres = VariantCopyInd(v, &put_val);
-+        }
-+#endif
-         break;
-     }
- 
-@@ -390,12 +463,220 @@
+@@ -418,12 +418,220 @@
      return S_OK;
  }
  
@@ -1318,111 +1216,6 @@
      if(isinf(r)) {
          return lex_error(ctx, MAKE_VBSERROR(VBSE_INVALID_NUMBER));
      }
-@@ -509,6 +550,7 @@
-             return comment_line(ctx);
-         ctx->ptr++;
-         return '-';
-+#ifndef __LIBWINEVBS__
-     case '(':
-         /* NOTE:
-          * We resolve empty brackets in lexer instead of parser to avoid complex conflicts
-@@ -528,6 +570,55 @@
-                 || ctx->last_token == tEMPTYBRACKETS)
-             return '(';
-         return tEXPRLBRACKET;
-+#else
-+    case '(': {
-+        const WCHAR *paren_pos = ctx->ptr;
-+        /* NOTE:
-+         * We resolve empty brackets in lexer instead of parser to avoid complex conflicts
-+         * in call statement special case |f()| without 'call' keyword
-+         */
-+        ctx->ptr++;
-+        skip_spaces(ctx);
-+        if(*ctx->ptr == ')') {
-+            ctx->ptr++;
-+            return tEMPTYBRACKETS;
-+        }
-+        /*
-+         * Parser can't predict if bracket is part of argument expression or an argument
-+         * in call expression. We predict it here instead.
-+         *
-+         * In statement context, 'f (x) * 8, y' treats (x) as expression grouping,
-+         * not call parens. Detect this when: identifier/')' precedes '(' with a space,
-+         * and a binary-only operator (*, /, \, ^, &) follows the matching ')'.
-+         */
-+        if(ctx->last_token == tIdentifier || ctx->last_token == ')' || ctx->last_token == tME) {
-+            if(paren_pos > ctx->code && (paren_pos[-1] == ' ' || paren_pos[-1] == '\t')
-+               && ctx->is_statement_ctx) {
-+                const WCHAR *p = ctx->ptr;
-+                int depth = 1;
-+
-+                while(p < ctx->end && depth > 0) {
-+                    if(*p == '(')
-+                        depth++;
-+                    else if(*p == ')')
-+                        depth--;
-+                    if(depth > 0)
-+                        p++;
-+                }
-+
-+                if(depth == 0) {
-+                    p++;
-+                    while(p < ctx->end && (*p == ' ' || *p == '\t'))
-+                        p++;
-+                    if(p < ctx->end && (*p == '*' || *p == '/' || *p == '\\' || *p == '^' || *p == '&'))
-+                        return tEXPRLBRACKET;
-+                }
-+            }
-+            return '(';
-+        }
-+        return tEXPRLBRACKET;
-+    }
-+#endif
-     case '[':
-         return parse_bracket_identifier(ctx, lval);
-     case '"':
-@@ -609,5 +700,40 @@
-     }
- 
-     ctx->after_continuation = FALSE;
-+#ifdef __LIBWINEVBS__
-+    if(ret == '(' || ret == tEXPRLBRACKET)
-+        ctx->paren_depth++;
-+    else if(ret == ')' || ret == tEMPTYBRACKETS) {
-+        if(ctx->paren_depth > 0)
-+            ctx->paren_depth--;
-+    }
-+
-+    if(ctx->paren_depth == 0) {
-+        switch(ret) {
-+        case tNL:
-+        case ':':
-+        case tTHEN:
-+        case tELSE:
-+        case tELSEIF:
-+            ctx->is_statement_ctx = TRUE;
-+            break;
-+        case tDOT:
-+        case '.':
-+        case ')':
-+        case tEMPTYBRACKETS:
-+            break;
-+        case tIdentifier:
-+            if(ctx->last_token != '.' && ctx->last_token != tDOT
-+               && ctx->last_token != tNL && ctx->last_token != ':'
-+               && ctx->last_token != tTHEN && ctx->last_token != tELSE
-+               && ctx->last_token != tELSEIF)
-+                ctx->is_statement_ctx = FALSE;
-+            break;
-+        default:
-+            ctx->is_statement_ctx = FALSE;
-+            break;
-+        }
-+    }
-+#endif
-     return (ctx->last_token = ret);
- }
 --- wine/dlls/vbscript/interp.c
 +++ libwinevbs/dlls/vbscript/interp.c
 @@ -27,7 +27,10 @@
@@ -1448,7 +1241,17 @@
  
  typedef HRESULT (*instr_func_t)(exec_ctx_t*);
  
-@@ -1417,11 +1424,13 @@
+@@ -389,6 +396,9 @@
+ static inline HRESULT stack_push_null(exec_ctx_t *ctx)
+ {
+     VARIANT v;
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
+     V_VT(&v) = VT_NULL;
+     return stack_push(ctx, &v);
+ }
+@@ -1417,11 +1427,13 @@
          v = V_VARIANTREF(v);
      }
  
@@ -1462,7 +1265,7 @@
  
      hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
      if(FAILED(hres))
-@@ -1834,6 +1843,20 @@
+@@ -1834,6 +1846,20 @@
      }else {
          named_item_t *item;
          disp = NULL;
@@ -1483,28 +1286,109 @@
          LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
              if(!(item->flags & SCRIPTITEM_GLOBALMEMBERS)) continue;
              disp = item->disp;
-@@ -2111,7 +2134,52 @@
+@@ -1975,6 +2001,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &val);
+     if(FAILED(hres))
+         return hres;
+@@ -1995,6 +2025,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &r);
+     if(FAILED(hres))
+         return hres;
+@@ -2019,6 +2053,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &r);
+     if(FAILED(hres))
+         return hres;
+@@ -2043,6 +2081,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &r);
+     if(FAILED(hres))
+         return hres;
+@@ -2067,6 +2109,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &r);
+     if(FAILED(hres))
+         return hres;
+@@ -2091,6 +2137,10 @@
+ 
+     TRACE("\n");
+ 
++#ifdef __LIBWINEVBS__
++    VariantInit(&v);
++#endif
++
+     hres = stack_pop_val(ctx, &r);
+     if(FAILED(hres))
+         return hres;
+@@ -2109,14 +2159,23 @@
+ 
+ static inline BOOL is_numeric_vt(VARTYPE vt)
+ {
++#ifndef __LIBWINEVBS__
+     return vt == VT_I2 || vt == VT_I4 || vt == VT_R4 || vt == VT_R8
+         || vt == VT_CY || vt == VT_DATE || vt == VT_UI1;
++#else
++    return vt == VT_I2 || vt == VT_I4 || vt == VT_R4 || vt == VT_R8
++        || vt == VT_CY || vt == VT_DATE || vt == VT_UI1
++        || vt == VT_BOOL || vt == VT_I1 || vt == VT_I8
++        || vt == VT_UI2 || vt == VT_UI4 || vt == VT_UI8
++        || vt == VT_DECIMAL || vt == VT_INT || vt == VT_UINT;
++#endif
+ }
+ 
+ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
  {
      TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
  
 +#ifndef __LIBWINEVBS__
-     /* FIXME: Fix comparing string to number */
+     /* VarCmp would use string comparison; VBScript converts the string to a number. */
+     if((V_VT(l) == VT_BSTR && is_numeric_vt(V_VT(r))) ||
+        (V_VT(r) == VT_BSTR && is_numeric_vt(V_VT(l)))) {
+@@ -2135,6 +2194,38 @@
+             return VARCMP_GT;
+         return VARCMP_EQ;
+     }
 +#else
-+    VARTYPE lvt, rvt;
-+    VARIANT left, right;
-+    HRESULT hres;
++    VARTYPE lvt = V_VT(l) & VT_TYPEMASK;
++    VARTYPE rvt = V_VT(r) & VT_TYPEMASK;
 +
-+    lvt = V_VT(l) & VT_TYPEMASK;
-+    rvt = V_VT(r) & VT_TYPEMASK;
++    if((lvt == VT_BSTR && is_numeric_vt(rvt)) ||
++       (rvt == VT_BSTR && is_numeric_vt(lvt))) {
++        VARIANT left, right;
++        HRESULT hres;
 +
-+    if((lvt == VT_BSTR && (rvt == VT_I1 || rvt == VT_I2 || rvt == VT_I4 || rvt == VT_I8 ||
-+                           rvt == VT_UI1 || rvt == VT_UI2 || rvt == VT_UI4 || rvt == VT_UI8 ||
-+                           rvt == VT_R4 || rvt == VT_R8 || rvt == VT_CY || rvt == VT_DECIMAL ||
-+                           rvt == VT_BOOL || rvt == VT_DATE || rvt == VT_INT || rvt == VT_UINT)) ||
-+       (rvt == VT_BSTR && (lvt == VT_I1 || lvt == VT_I2 || lvt == VT_I4 || lvt == VT_I8 ||
-+                           lvt == VT_UI1 || lvt == VT_UI2 || lvt == VT_UI4 || lvt == VT_UI8 ||
-+                           lvt == VT_R4 || lvt == VT_R8 || lvt == VT_CY || lvt == VT_DECIMAL ||
-+                           lvt == VT_BOOL || lvt == VT_DATE || lvt == VT_INT || lvt == VT_UINT))) {
 +        V_VT(&left) = VT_EMPTY;
 +        hres = VariantCopy(&left, l);
 +        if(FAILED(hres))
@@ -1516,11 +1400,6 @@
 +            VariantClear(&left);
 +            return hres;
 +        }
-+
-+        /* By setting VT_RESERVED on only the numeric operand when comparing string-to-number,
-+           trigger VarCmp's path that attempts to convert the string to a number for numeric comparison,
-+           which succeeds for valid numeric strings like "123" but fails with a type mismatch error
-+           for empty "" or invalid strings like "abc". */
 +
 +        if(lvt == VT_BSTR)
 +            V_VT(&right) |= VT_RESERVED;
@@ -1535,20 +1414,7 @@
 +#endif
  
      return VarCmp(l, r, ctx->script->lcid, 0);
-  }
---- wine/dlls/vbscript/parse.h
-+++ libwinevbs/dlls/vbscript/parse.h
-@@ -309,6 +309,10 @@
-     LCID lcid;
- 
-     int last_token;
-+#ifdef __LIBWINEVBS__
-+    BOOL is_statement_ctx;
-+    int paren_depth;
-+#endif
-     unsigned last_nl;
-     BOOL after_continuation;
- 
+ }
 # libwinevbs-only: dlls/vbscript/regexp_proxy.c
 --- wine/dlls/vbscript/vbscript.h
 +++ libwinevbs/dlls/vbscript/vbscript.h
@@ -1565,17 +1431,9 @@
  typedef struct {
      void **blocks;
      DWORD block_cnt;
-@@ -413,6 +419,7 @@
- HRESULT exec_global_code(script_ctx_t*,vbscode_t*,VARIANT*,BOOL);
- BOOL is_exec_local_scope(exec_ctx_t*);
- HRESULT exec_add_caller_dynamic_var(script_ctx_t*,exec_ctx_t*,const WCHAR*);
-+
- void release_dynamic_var(dynamic_var_t*);
- named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
- void release_named_item(named_item_t*);
 --- wine/dlls/vbscript/vbscript_main.c
 +++ libwinevbs/dlls/vbscript/vbscript_main.c
-@@ -39,7 +39,274 @@
+@@ -39,7 +39,277 @@
  BSTR get_vbscript_string(int id)
  {
      WCHAR buf[512];
@@ -1790,6 +1648,9 @@
 +        case VBSE_INVALID_EXIT:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_INVALID_EXIT");
 +            break;
++        case VBSE_INVALID_FOR_CONTROL:
++            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_INVALID_FOR_CONTROL");
++            break;
 +        case VBSE_NAME_REDEFINED:
 +            swprintf(buf, ARRAY_SIZE(buf), L"VBSE_NAME_REDEFINED");
 +            break;
@@ -1850,7 +1711,7 @@
      return SysAllocString(buf);
  }
  
-@@ -258,6 +525,7 @@
+@@ -258,6 +528,7 @@
  /******************************************************************
   *              DllMain (vbscript.@)
   */
@@ -1858,7 +1719,7 @@
  BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  {
      TRACE("(%p %ld %p)\n", hInstDLL, fdwReason, lpv);
-@@ -276,10 +544,12 @@
+@@ -276,10 +547,12 @@
  
      return TRUE;
  }
@@ -1871,44 +1732,11 @@
  HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  {
      if(IsEqualGUID(&CLSID_VBScript, rclsid)) {
-@@ -293,3 +563,4 @@
+@@ -293,3 +566,4 @@
      FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
      return CLASS_E_CLASSNOTAVAILABLE;
  }
 +#endif
---- wine/dlls/vbscript/parser.y
-+++ libwinevbs/dlls/vbscript/parser.y
-@@ -830,9 +830,19 @@
-         return call_expr;
- 
-     if(arguments->type != EXPR_NOARG) {
-+#ifdef __LIBWINEVBS__
-         FIXME("Invalid syntax: missing comma\n");
-         ctx->hres = E_FAIL;
-         return NULL;
-+#else
-+        /* 'f (x) + expr, ...' — combine bracketed arg with the +/- expression. */
-+        expression_t *remaining = arguments->next;
-+        call_expr->args = new_binary_expression(ctx, EXPR_ADD, call_expr->args, arguments);
-+        if(!call_expr->args)
-+            return NULL;
-+        call_expr->args->next = remaining;
-+        return call_expr;
-+#endif
-     }
- 
-     call_expr->args->next = arguments->next;
-@@ -1341,6 +1351,10 @@
-     ctx->hres = S_OK;
-     ctx->error_loc = -1;
-     ctx->last_token = tNL;
-+#ifdef __LIBWINEVBS__
-+    ctx->is_statement_ctx = TRUE;
-+    ctx->paren_depth = 0;
-+#endif
-     ctx->last_nl = 0;
-     ctx->stats = ctx->stats_tail = NULL;
-     ctx->class_decls = NULL;
 --- wine/dlls/vbscript/vbregexp.c
 +++ libwinevbs/dlls/vbscript/vbregexp.c
 @@ -209,7 +209,11 @@
@@ -2271,20 +2099,7 @@
      default:
          FIXME("arg %s not supported\n", debugstr_variant(arg));
          return E_NOTIMPL;
-@@ -2229,8 +2254,12 @@
- 
- static HRESULT Global_SetLocale(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
- {
-+#ifndef __LIBWINEVBS__
-     FIXME("\n");
-     return E_NOTIMPL;
-+#else
-+    return S_OK;
-+#endif
- }
- 
- static HRESULT Global_DateValue(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-@@ -2347,8 +2376,16 @@
+@@ -2665,8 +2690,16 @@
          hres = E_NOTIMPL;
      }
  
@@ -2301,7 +2116,7 @@
  
      SysFreeString(prompt);
      SysFreeString(title);
-@@ -2505,14 +2542,129 @@
+@@ -2823,8 +2856,77 @@
  
  static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
  {
@@ -2378,70 +2193,18 @@
 +#endif
  }
  
- static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
- {
-+#ifndef __LIBWINEVBS__
-     FIXME("\n");
-     return E_NOTIMPL;
-+#else
-+    SYSTEMTIME st;
-+    BSTR interval;
-+    DATE date;
-+    HRESULT hr;
-+
-+    assert(2 <= args_cnt && args_cnt <= 4);
-+
-+    if (V_VT(arg) != VT_BSTR || V_VT(arg + 1) != VT_DATE)
-+        return E_INVALIDARG;
-+
-+    interval = V_BSTR(arg);
-+    date = V_DATE(arg + 1);
-+
-+    VariantTimeToSystemTime(date, &st);
-+
-+    int result;
-+    if (!vbs_wcsicmp(interval, L"yyyy"))
-+        result = st.wYear;
-+    else if (!vbs_wcsicmp(interval, L"q"))
-+        result = (st.wMonth - 1) / 3 + 1;
-+    else if (!vbs_wcsicmp(interval, L"m"))
-+        result = st.wMonth;
-+    else if (!vbs_wcsicmp(interval, L"y"))
-+        return E_NOTIMPL;
-+    else if (!vbs_wcsicmp(interval, L"d"))
-+        result = st.wDay;
-+    else if (!vbs_wcsicmp(interval, L"w"))
-+        return E_NOTIMPL;
-+    else if (!vbs_wcsicmp(interval, L"ww"))
-+        return E_NOTIMPL;
-+    else if (!vbs_wcsicmp(interval, L"h"))
-+        result = st.wHour;
-+    else if (!vbs_wcsicmp(interval, L"n"))
-+        result = st.wMinute;
-+    else if (!vbs_wcsicmp(interval, L"s"))
-+        result = st.wSecond;
-+    else
-+        return E_INVALIDARG;
-+
-+    V_VT(res) = VT_I4;
-+    V_I4(res) = result;
-+
-+    return S_OK;
-+#endif
- }
- 
- static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-@@ -3290,6 +3442,7 @@
+ static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
+@@ -3901,6 +4003,7 @@
  
  static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
  {
 +#ifndef __LIBWINEVBS__
-     union
-     {
-         struct
-@@ -3318,6 +3471,88 @@
-     if (FAILED(hres)) return hres;
- 
+     int a[4] = {-1, -2, -2, -2};
+     HRESULT hres;
+     BSTR str;
+@@ -3913,6 +4016,88 @@
+     hres = format_number_lcid(This->ctx->lcid, args, a[0], a[1], a[2], a[3], &str);
+     if(FAILED(hres)) return hres;
      return return_bstr(res, str);
 +#else
 +    HRESULT hres;
@@ -2528,179 +2291,6 @@
  }
  
  static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
-@@ -3681,6 +3916,29 @@
-     return S_OK;
- }
- 
-+#ifdef __LIBWINEVBS__
-+static HRESULT dispatch_to_string(script_ctx_t *ctx, IDispatch *disp, BSTR *ret)
-+{
-+    DISPPARAMS dp = {0};
-+    VARIANT v;
-+    HRESULT hres;
-+
-+    if(!disp)
-+        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
-+    hres = disp_call(ctx, disp, DISPID_VALUE, &dp, &v);
-+    if(FAILED(hres))
-+        return hres;
-+    if(V_VT(&v) == VT_BSTR) {
-+        *ret = V_BSTR(&v);
-+        return S_OK;
-+    }
-+    hres = to_string(&v, ret);
-+    VariantClear(&v);
-+    return hres;
-+}
-+#endif
-+
-+#ifndef __LIBWINEVBS__
- static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
- {
-     vbscode_t *code;
-@@ -3708,7 +3966,47 @@
- 
-     return exec_global_code(This->ctx, code, res, FALSE);
- }
-+#else
-+static HRESULT Global_Eval(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-+{
-+    BSTR conv_str = NULL;
-+    vbscode_t *code;
-+    BSTR str;
-+    HRESULT hres;
- 
-+    TRACE("%s\n", debugstr_variant(arg));
-+
-+    if(V_VT(arg) == VT_BSTR) {
-+        str = V_BSTR(arg);
-+    }else if(V_VT(arg) == VT_DISPATCH) {
-+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-+        if(FAILED(hres))
-+            return hres;
-+        str = conv_str;
-+    }else {
-+        if(res)
-+            return VariantCopy(res, arg);
-+        return S_OK;
-+    }
-+
-+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-+                          SCRIPTTEXT_ISEXPRESSION, FALSE, &code);
-+    SysFreeString(conv_str);
-+    if(FAILED(hres)) {
-+        clear_error_loc(This->ctx);
-+        return hres;
-+    }
-+
-+    if(is_exec_local_scope(This->ctx->current_exec)) {
-+        This->ctx->caller_exec = This->ctx->current_exec;
-+        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-+    }
-+
-+    return exec_global_code(This->ctx, code, res, FALSE);
-+}
-+#endif
-+
-+#ifndef __LIBWINEVBS__
- static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
- {
-     vbscode_t *code;
-@@ -3743,7 +4041,55 @@
- 
-     return exec_global_code(This->ctx, code, res, FALSE);
- }
-+#else
-+static HRESULT Global_Execute(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-+{
-+    BSTR conv_str = NULL;
-+    vbscode_t *code;
-+    BSTR str;
-+    HRESULT hres;
- 
-+    TRACE("%s\n", debugstr_variant(arg));
-+
-+    if(V_VT(arg) == VT_BSTR) {
-+        str = V_BSTR(arg);
-+    }else if(V_VT(arg) == VT_DISPATCH) {
-+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-+        if(FAILED(hres))
-+            return hres;
-+        str = conv_str;
-+    }else {
-+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-+    }
-+
-+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-+                          0, TRUE, &code);
-+    SysFreeString(conv_str);
-+    if(FAILED(hres)) {
-+        clear_error_loc(This->ctx);
-+        return hres;
-+    }
-+
-+    if(is_exec_local_scope(This->ctx->current_exec)) {
-+        unsigned i;
-+
-+        /* Pre-register Dim variables in the caller's scope */
-+        for(i = 0; i < code->main_code.var_cnt; i++) {
-+            hres = exec_add_caller_dynamic_var(This->ctx, This->ctx->current_exec,
-+                                               code->main_code.vars[i].name);
-+            if(FAILED(hres))
-+                return hres;
-+        }
-+
-+        This->ctx->caller_exec = This->ctx->current_exec;
-+        return exec_script(This->ctx, FALSE, &code->main_code, NULL, NULL, res);
-+    }
-+
-+    return exec_global_code(This->ctx, code, res, FALSE);
-+}
-+#endif
-+
-+#ifndef __LIBWINEVBS__
- static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
- {
-     vbscode_t *code;
-@@ -3763,6 +4109,38 @@
- 
-     return exec_global_code(This->ctx, code, res, FALSE);
- }
-+#else
-+static HRESULT Global_ExecuteGlobal(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
-+{
-+    BSTR conv_str = NULL;
-+    vbscode_t *code;
-+    BSTR str;
-+    HRESULT hres;
-+
-+    TRACE("%s\n", debugstr_variant(arg));
-+
-+    if(V_VT(arg) == VT_BSTR) {
-+        str = V_BSTR(arg);
-+    }else if(V_VT(arg) == VT_DISPATCH) {
-+        hres = dispatch_to_string(This->ctx, V_DISPATCH(arg), &conv_str);
-+        if(FAILED(hres))
-+            return hres;
-+        str = conv_str;
-+    }else {
-+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
-+    }
-+
-+    hres = compile_script(This->ctx, str, NULL, NULL, 0, 0,
-+                          0, TRUE, &code);
-+    SysFreeString(conv_str);
-+    if(FAILED(hres)) {
-+        clear_error_loc(This->ctx);
-+        return hres;
-+    }
-+
-+    return exec_global_code(This->ctx, code, res, FALSE);
-+}
-+#endif
- 
- static HRESULT Global_GetRef(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
- {
 --- wine/dlls/oleaut32/oleaut.c
 +++ libwinevbs/dlls/oleaut32/oleaut.c
 @@ -282,9 +282,13 @@
@@ -2746,6 +2336,242 @@
  
  /***********************************************************************
   *		DllRegisterServer (OLEAUT32.@)
+--- wine/dlls/oleaut32/variant.c
++++ libwinevbs/dlls/oleaut32/variant.c
+@@ -28,6 +28,9 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdarg.h>
++#ifdef __LIBWINEVBS__
++#include <limits.h>
++#endif
+ 
+ #define COBJMACROS
+ #include "windef.h"
+@@ -2784,6 +2787,36 @@
+ 
+     TRACE("%s, %s, %#lx, %#lx.\n", debugstr_variant(left), debugstr_variant(right), lcid, flags);
+ 
++#ifdef __LIBWINEVBS__
++    /* Fast path for common integer comparisons: skip expensive VariantChangeType */
++    if (V_VT(left) == VT_I2 && V_VT(right) == VT_I2)
++        return (V_I2(left) == V_I2(right)) ? VARCMP_EQ :
++               (V_I2(left) < V_I2(right)) ? VARCMP_LT : VARCMP_GT;
++
++    if (!(V_VT(left) & ~VT_TYPEMASK) && !(V_VT(right) & ~VT_TYPEMASK))
++    {
++        LONGLONG lval, rval;
++        BOOL left_i = TRUE, right_i = TRUE;
++
++        switch (V_VT(left))
++        {
++        case VT_I4:    lval = V_I4(left); break;
++        case VT_I2:    lval = V_I2(left); break;
++        case VT_EMPTY: lval = 0; break;
++        default:       left_i = FALSE; break;
++        }
++        switch (V_VT(right))
++        {
++        case VT_I4:    rval = V_I4(right); break;
++        case VT_I2:    rval = V_I2(right); break;
++        case VT_EMPTY: rval = 0; break;
++        default:       right_i = FALSE; break;
++        }
++        if (left_i && right_i)
++            return (lval == rval) ? VARCMP_EQ : (lval < rval) ? VARCMP_LT : VARCMP_GT;
++    }
++#endif
++
+     lvt = V_VT(left) & VT_TYPEMASK;
+     rvt = V_VT(right) & VT_TYPEMASK;
+     xmask = (1 << lvt) | (1 << rvt);
+@@ -3046,6 +3079,7 @@
+         goto VarAnd_Exit;
+     }
+ 
++#ifndef __LIBWINEVBS__
+     if (leftvt == VT_NULL || rightvt == VT_NULL)
+     {
+         /*
+@@ -3096,7 +3130,99 @@
+         V_VT(result) = resvt;
+         goto VarAnd_Exit;
+     }
++#else
++    if (leftvt == VT_NULL || rightvt == VT_NULL)
++    {
++        VARIANT *other;
++        VARTYPE  othervt;
++        BOOL     other_is_zero = FALSE;
++        BOOL     other_known = TRUE;
+ 
++        V_VT(result) = VT_NULL;
++        V_I8(result) = 0;
++
++        if (leftvt == VT_NULL && rightvt == VT_NULL)
++            goto VarAnd_Exit;
++
++        if (leftvt == VT_NULL) { other = right; othervt = rightvt; }
++        else                   { other = left;  othervt = leftvt;  }
++
++        switch (othervt)
++        {
++        case VT_EMPTY: other_is_zero = TRUE;                             break;
++        case VT_I1:    other_is_zero = (V_I1(other)   == 0);             break;
++        case VT_UI1:   other_is_zero = (V_UI1(other)  == 0);             break;
++        case VT_I2:    other_is_zero = (V_I2(other)   == 0);             break;
++        case VT_UI2:   other_is_zero = (V_UI2(other)  == 0);             break;
++        case VT_I4:    other_is_zero = (V_I4(other)   == 0);             break;
++        case VT_UI4:   other_is_zero = (V_UI4(other)  == 0);             break;
++        case VT_I8:    other_is_zero = (V_I8(other)   == 0);             break;
++        case VT_UI8:   other_is_zero = (V_UI8(other)  == 0);             break;
++        case VT_INT:   other_is_zero = (V_INT(other)  == 0);             break;
++        case VT_UINT:  other_is_zero = (V_UINT(other) == 0);             break;
++        case VT_BOOL:  other_is_zero = (V_BOOL(other) == VARIANT_FALSE); break;
++        case VT_R4:    other_is_zero = (V_R4(other)   == 0.0f);          break;
++        case VT_R8:    other_is_zero = (V_R8(other)   == 0.0);           break;
++        case VT_DATE:  other_is_zero = (V_DATE(other) == 0.0);           break;
++        case VT_CY:    other_is_zero = (V_CY(other).int64 == 0);         break;
++        case VT_DECIMAL:
++            other_is_zero = (V_DECIMAL(other).Hi32 == 0 &&
++                             V_DECIMAL(other).Lo64 == 0);
++            break;
++        case VT_BSTR:
++        {
++            VARIANT_BOOL b;
++            hres = VarBoolFromStr(V_BSTR(other), LOCALE_USER_DEFAULT,
++                                  VAR_LOCALBOOL, &b);
++            if (FAILED(hres))
++                goto VarAnd_Exit;
++            if (b == VARIANT_FALSE)
++            {
++                V_VT(result)   = VT_BOOL;
++                V_BOOL(result) = VARIANT_FALSE;
++            }
++            else
++            {
++                V_VT(result) = VT_NULL;
++                V_I8(result) = 0;
++            }
++            goto VarAnd_Exit;
++        }
++        default:
++            other_known = FALSE;
++            break;
++        }
++
++        if (!other_known || !other_is_zero)
++        {
++            V_VT(result) = VT_NULL;
++            V_I8(result) = 0;
++            goto VarAnd_Exit;
++        }
++
++        V_VT(result) = resvt;
++        switch (resvt)
++        {
++        case VT_BOOL: V_BOOL(result) = VARIANT_FALSE; break;
++        case VT_I1:   V_I1(result)   = 0;            break;
++        case VT_UI1:  V_UI1(result)  = 0;            break;
++        case VT_I2:   V_I2(result)   = 0;            break;
++        case VT_UI2:  V_UI2(result)  = 0;            break;
++        case VT_I4:   V_I4(result)   = 0;            break;
++        case VT_UI4:  V_UI4(result)  = 0;            break;
++        case VT_I8:   V_I8(result)   = 0;            break;
++        case VT_UI8:  V_UI8(result)  = 0;            break;
++        case VT_INT:  V_INT(result)  = 0;            break;
++        case VT_UINT: V_UINT(result) = 0;            break;
++        default:
++            V_VT(result) = VT_NULL;
++            V_I8(result) = 0;
++            break;
++        }
++        goto VarAnd_Exit;
++    }
++#endif
++
+     hres = VariantCopy(&varLeft, left);
+     if (FAILED(hres)) goto VarAnd_Exit;
+ 
+@@ -3223,6 +3349,78 @@
+     };
+ 
+     TRACE("(%s,%s,%p)\n", debugstr_variant(left), debugstr_variant(right), result);
++
++#ifdef __LIBWINEVBS__
++    /* Fast path for common integer additions: skip expensive VariantChangeType */
++    if (V_VT(left) == VT_I2 && V_VT(right) == VT_I2)
++    {
++        int sum = (int)V_I2(left) + (int)V_I2(right);
++        if (sum >= -32768 && sum <= 32767)
++        {
++            V_VT(result) = VT_I2;
++            V_I2(result) = sum;
++        }
++        else
++        {
++            V_VT(result) = VT_I4;
++            V_I4(result) = sum;
++        }
++        return S_OK;
++    }
++    if (!(V_VT(left) & ~VT_TYPEMASK) && !(V_VT(right) & ~VT_TYPEMASK))
++    {
++        LONGLONG lval, rval;
++        BOOL left_i = TRUE, right_i = TRUE;
++
++        switch (V_VT(left))
++        {
++        case VT_I4:    lval = V_I4(left); break;
++        case VT_I2:    lval = V_I2(left); break;
++        case VT_EMPTY: lval = 0; break;
++        default:       left_i = FALSE; break;
++        }
++        switch (V_VT(right))
++        {
++        case VT_I4:    rval = V_I4(right); break;
++        case VT_I2:    rval = V_I2(right); break;
++        case VT_EMPTY: rval = 0; break;
++        default:       right_i = FALSE; break;
++        }
++        if (left_i && right_i)
++        {
++            LONGLONG sum = lval + rval;
++            if (V_VT(left) == VT_I4 || V_VT(right) == VT_I4)
++            {
++                if (sum >= (LONGLONG)INT_MIN && sum <= (LONGLONG)INT_MAX)
++                {
++                    V_VT(result) = VT_I4;
++                    V_I4(result) = sum;
++                }
++                else
++                {
++                    /* I4 overflow promotes to R8 (not I8) per Windows behavior */
++                    V_VT(result) = VT_R8;
++                    V_R8(result) = (double)sum;
++                }
++            }
++            else
++            {
++                /* Both are I2 or EMPTY: result is I2, overflow promotes to I4 */
++                if (sum >= -32768 && sum <= 32767)
++                {
++                    V_VT(result) = VT_I2;
++                    V_I2(result) = sum;
++                }
++                else
++                {
++                    V_VT(result) = VT_I4;
++                    V_I4(result) = sum;
++                }
++            }
++            return S_OK;
++        }
++    }
++#endif
+ 
+     VariantInit(&lv);
+     VariantInit(&rv);
 --- wine/dlls/oleaut32/vartype.c
 +++ libwinevbs/dlls/oleaut32/vartype.c
 @@ -6198,6 +6198,12 @@
@@ -2883,4 +2709,3 @@
  
    /* If we have to use the default firstDay, find which one it is */
    if (iFirstDay == 0) {
-# libwinevbs-only: wine-f051a28829e589b5cf025c574cb16fcf7aeb345a.patch

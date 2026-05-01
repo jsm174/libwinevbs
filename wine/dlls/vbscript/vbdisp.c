@@ -146,22 +146,21 @@ static HRESULT get_propput_arg(script_ctx_t *ctx, const DISPPARAMS *dp, WORD fla
     return S_OK;
 }
 
-#ifdef __LIBWINEVBS__
 static HRESULT get_array_from_variant(VARIANT *v, SAFEARRAY **array)
 {
     switch(V_VT(v)) {
     case VT_ARRAY|VT_BYREF|VT_VARIANT:
         *array = *V_ARRAYREF(v);
-        break;
+        return S_OK;
     case VT_ARRAY|VT_VARIANT:
         *array = V_ARRAY(v);
-        break;
+        return S_OK;
     default:
-        return E_FAIL;
+        if(V_ISARRAY(v))
+            FIXME("Unsupported array type %x\n", V_VT(v));
+        return DISP_E_MEMBERNOTFOUND;
     }
-    return S_OK;
 }
-#endif
 
 static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
 {
@@ -171,39 +170,15 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
     case DISPATCH_PROPERTYGET:
         if(dp->cArgs) {
-#ifndef __LIBWINEVBS__
-            if (!V_ISARRAY(v))
-            {
-                WARN("called with arguments for non-array property\n");
-                return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
-            }
-
-            if (FAILED(hres = array_access(V_ARRAY(v), dp, &v)))
-            {
-                WARN("failed to access array element\n");
-                return hres;
-            }
-#else
             SAFEARRAY *array;
 
-            if (!V_ISARRAY(v))
-            {
-                WARN("called with arguments for non-array property\n");
-                return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
-            }
-
             if(FAILED(hres = get_array_from_variant(v, &array)))
-            {
-                FIXME("Unsupported array type %x\n", V_VT(v));
                 return hres;
-            }
 
-            if (FAILED(hres = array_access(array, dp, &v)))
-            {
+            if(FAILED(hres = array_access(array, dp, &v))) {
                 WARN("failed to access array element\n");
                 return hres;
             }
-#endif
         }
 
         hres = VariantCopyInd(res, v);
@@ -220,21 +195,9 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
             return hres;
 
         if(arg_cnt(dp)) {
-#ifndef __LIBWINEVBS__
-            FIXME("Arguments not supported\n");
-            return E_NOTIMPL;
-#else
             SAFEARRAY *array;
 
-            if(!V_ISARRAY(v)) {
-                FIXME("Arguments not supported for type %x\n", V_VT(v));
-                if(own_val)
-                    VariantClear(&put_val);
-                return E_NOTIMPL;
-            }
-
             if(FAILED(hres = get_array_from_variant(v, &array))) {
-                FIXME("Unsupported array type %x\n", V_VT(v));
                 if(own_val)
                     VariantClear(&put_val);
                 return hres;
@@ -246,25 +209,17 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
                     VariantClear(&put_val);
                 return hres;
             }
-#endif
         }
 
         if(res)
             V_VT(res) = VT_EMPTY;
 
-#ifndef __LIBWINEVBS__
-        if(own_val)
-            *v = put_val;
-        else
-            hres = VariantCopyInd(v, &put_val);
-#else
         if(own_val) {
             VariantClear(v);
             *v = put_val;
         } else {
             hres = VariantCopyInd(v, &put_val);
         }
-#endif
         break;
     }
 
