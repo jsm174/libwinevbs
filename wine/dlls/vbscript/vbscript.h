@@ -185,6 +185,7 @@ HRESULT create_func_ref(script_ctx_t*,function_t*,IDispatch**);
 function_t *script_disp_find_func(ScriptDisp*,const WCHAR*);
 
 HRESULT to_int(VARIANT*,int*);
+HRESULT to_double(VARIANT*,double*);
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {
@@ -209,7 +210,8 @@ struct vbcaller {
 
 struct _script_ctx_t {
     IActiveScriptSite *site;
-    LCID lcid;
+    LCID lcid;      /* current, mutable via SetLocale */
+    LCID host_lcid; /* embedder-supplied baseline (IActiveScriptSite::GetLCID) */
     UINT codepage;
 
     IInternetHostSecurityManager *secmgr;
@@ -419,7 +421,6 @@ HRESULT exec_script(script_ctx_t*,BOOL,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT
 HRESULT exec_global_code(script_ctx_t*,vbscode_t*,VARIANT*,BOOL);
 BOOL is_exec_local_scope(exec_ctx_t*);
 HRESULT exec_add_caller_dynamic_var(script_ctx_t*,exec_ctx_t*,const WCHAR*);
-
 void release_dynamic_var(dynamic_var_t*);
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned);
 void release_named_item(named_item_t*);

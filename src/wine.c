@@ -1388,6 +1388,17 @@ DWORD WINAPI GetLogicalDrives(void)
    return 0;
 }
 
+DWORD WINAPI GetShortPathNameW(LPCWSTR lpszLongPath, LPWSTR lpszShortPath, DWORD cchBuffer)
+{
+   if (!lpszLongPath) return 0;
+   DWORD len = wcslen(lpszLongPath);
+   if (lpszShortPath && cchBuffer > len) {
+      wcscpy(lpszShortPath, lpszLongPath);
+      return len;
+   }
+   return len + 1;
+}
+
 UINT WINAPI GetSystemDirectoryW(LPWSTR lpBuffer, UINT uSize)
 {
    return 0;

@@ -6766,6 +6766,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
 {
+#ifndef __LIBWINEVBS__
     switch (lcid)
     {
     case LOCALE_NEUTRAL:
@@ -6775,6 +6776,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
     default:
         return !!NlsValidateLocale( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
     }
+#else
+    return TRUE;
+#endif
 }
 
 
