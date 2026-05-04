@@ -2209,26 +2209,41 @@ static HRESULT interp_imp(exec_ctx_t *ctx)
 
 static inline BOOL is_numeric_vt(VARTYPE vt)
 {
-#ifndef __LIBWINEVBS__
     return vt == VT_I2 || vt == VT_I4 || vt == VT_R4 || vt == VT_R8
-        || vt == VT_CY || vt == VT_DATE || vt == VT_UI1;
-#else
-    return vt == VT_I2 || vt == VT_I4 || vt == VT_R4 || vt == VT_R8
-        || vt == VT_CY || vt == VT_DATE || vt == VT_UI1
-        || vt == VT_BOOL || vt == VT_I1 || vt == VT_I8
-        || vt == VT_UI2 || vt == VT_UI4 || vt == VT_UI8
-        || vt == VT_DECIMAL || vt == VT_INT || vt == VT_UINT;
-#endif
+        || vt == VT_CY || vt == VT_DATE || vt == VT_UI1 || vt == VT_DECIMAL
+        || vt == VT_I1;
 }
 
-static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
+/* Native VBScript rejects these Automation types with error 458
+ * (VBSE_INVALID_TYPELIB_VARIABLE) when they appear in script expressions,
+ * on both 32-bit and 64-bit. VT_I8 is rejected on 32-bit native but
+ * accepted on 64-bit; not included here so BSTR-vs-I8 falls through to
+ * the default VarCmp path (BSTR > other), matching 64-bit native. */
+static inline BOOL is_unsupported_script_vt(VARTYPE vt)
 {
+    return vt == VT_UI2 || vt == VT_UI4 || vt == VT_UI8 || vt == VT_UINT;
+}
+
+/* CMP_LEFT_LITERAL / CMP_RIGHT_LITERAL are set by the compiler: each side is
+ * flagged if the source expression at the comparison site is a bare numeric
+ * literal. Native VBScript dispatches BSTR-vs-numeric on this distinction
+ * (literal coerces, non-literal string-compares). */
+static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r, unsigned flags)
+{
+    BOOL l_lit = flags & CMP_LEFT_LITERAL;
+    BOOL r_lit = flags & CMP_RIGHT_LITERAL;
+    VARTYPE lvt = V_VT(l) & VT_TYPEMASK;
+    VARTYPE rvt = V_VT(r) & VT_TYPEMASK;
+
     TRACE("%s %s\n", debugstr_variant(l), debugstr_variant(r));
 
-#ifndef __LIBWINEVBS__
-    /* VarCmp would use string comparison; VBScript converts the string to a number. */
-    if((V_VT(l) == VT_BSTR && is_numeric_vt(V_VT(r))) ||
-       (V_VT(r) == VT_BSTR && is_numeric_vt(V_VT(l)))) {
+    if(is_unsupported_script_vt(lvt) || is_unsupported_script_vt(rvt))
+        return MAKE_VBSERROR(VBSE_INVALID_TYPELIB_VARIABLE);
+
+    /* BSTR vs numeric LITERAL: coerce BSTR to a number, parse failure raises
+     * type-mismatch (error 13). */
+    if((lvt == VT_BSTR && is_numeric_vt(rvt) && r_lit) ||
+       (rvt == VT_BSTR && is_numeric_vt(lvt) && l_lit)) {
         double dl, dr;
         HRESULT hres;
 
@@ -2244,43 +2259,39 @@ static HRESULT var_cmp(exec_ctx_t *ctx, VARIANT *l, VARIANT *r)
             return VARCMP_GT;
         return VARCMP_EQ;
     }
-#else
-    VARTYPE lvt = V_VT(l) & VT_TYPEMASK;
-    VARTYPE rvt = V_VT(r) & VT_TYPEMASK;
 
-    if((lvt == VT_BSTR && is_numeric_vt(rvt)) ||
-       (rvt == VT_BSTR && is_numeric_vt(lvt))) {
-        VARIANT left, right;
+    /* BSTR vs numeric (non-literal) or VT_BOOL: coerce the numeric/bool side
+     * to its CStr form and string-compare. No error on unparseable BSTR;
+     * relational uses binary lex order. VarBstrFromBool yields "-1"/"0"
+     * rather than VBScript's "True"/"False", so bool strings are hardcoded. */
+    if((lvt == VT_BSTR && (is_numeric_vt(rvt) || rvt == VT_BOOL)) ||
+       (rvt == VT_BSTR && (is_numeric_vt(lvt) || lvt == VT_BOOL))) {
+        VARIANT *num = lvt == VT_BSTR ? r : l;
+        VARIANT *str = lvt == VT_BSTR ? l : r;
+        VARIANT num_str;
         HRESULT hres;
 
-        V_VT(&left) = VT_EMPTY;
-        hres = VariantCopy(&left, l);
-        if(FAILED(hres))
-            return hres;
-
-        V_VT(&right) = VT_EMPTY;
-        hres = VariantCopy(&right, r);
-        if(FAILED(hres)) {
-            VariantClear(&left);
-            return hres;
+        VariantInit(&num_str);
+        if((V_VT(num) & VT_TYPEMASK) == VT_BOOL) {
+            V_VT(&num_str) = VT_BSTR;
+            V_BSTR(&num_str) = SysAllocString(V_BOOL(num) ? L"True" : L"False");
+            if(!V_BSTR(&num_str))
+                return E_OUTOFMEMORY;
+        }else {
+            hres = VariantChangeType(&num_str, num, 0, VT_BSTR);
+            if(FAILED(hres))
+                return hres;
         }
-
-        if(lvt == VT_BSTR)
-            V_VT(&right) |= VT_RESERVED;
-        else
-            V_VT(&left) |= VT_RESERVED;
-
-        hres = VarCmp(&left, &right, ctx->script->lcid, 0);
-        VariantClear(&left);
-        VariantClear(&right);
+        hres = lvt == VT_BSTR ? VarCmp(str, &num_str, 0, 0)
+                              : VarCmp(&num_str, str, 0, 0);
+        VariantClear(&num_str);
         return hres;
     }
-#endif
 
     return VarCmp(l, r, ctx->script->lcid, 0);
 }
 
-static HRESULT cmp_oper(exec_ctx_t *ctx)
+static HRESULT cmp_oper(exec_ctx_t *ctx, unsigned flags)
 {
     variant_val_t l, r;
     HRESULT hres;
@@ -2291,7 +2302,7 @@ static HRESULT cmp_oper(exec_ctx_t *ctx)
 
     hres = stack_pop_val(ctx, &l);
     if(SUCCEEDED(hres)) {
-        hres = var_cmp(ctx, l.v, r.v);
+        hres = var_cmp(ctx, l.v, r.v, flags);
         release_val(&l);
     }
 
@@ -2301,12 +2312,13 @@ static HRESULT cmp_oper(exec_ctx_t *ctx)
 
 static HRESULT interp_equal(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2319,12 +2331,13 @@ static HRESULT interp_equal(exec_ctx_t *ctx)
 
 static HRESULT interp_nequal(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2337,12 +2350,13 @@ static HRESULT interp_nequal(exec_ctx_t *ctx)
 
 static HRESULT interp_gt(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2355,12 +2369,13 @@ static HRESULT interp_gt(exec_ctx_t *ctx)
 
 static HRESULT interp_gteq(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2373,12 +2388,13 @@ static HRESULT interp_gteq(exec_ctx_t *ctx)
 
 static HRESULT interp_lt(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2391,12 +2407,13 @@ static HRESULT interp_lt(exec_ctx_t *ctx)
 
 static HRESULT interp_lteq(exec_ctx_t *ctx)
 {
+    const unsigned flags = ctx->instr->arg1.uint;
     VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = cmp_oper(ctx);
+    hres = cmp_oper(ctx, flags);
     if(FAILED(hres))
         return hres;
     if(hres == VARCMP_NULL)
@@ -2410,6 +2427,7 @@ static HRESULT interp_lteq(exec_ctx_t *ctx)
 static HRESULT interp_case(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->instr->arg1.uint;
+    const unsigned flags = ctx->instr->arg2.uint;
     variant_val_t v;
     HRESULT hres;
 
@@ -2419,7 +2437,7 @@ static HRESULT interp_case(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = var_cmp(ctx, stack_top(ctx, 0), v.v);
+    hres = var_cmp(ctx, stack_top(ctx, 0), v.v, flags);
     release_val(&v);
     if(FAILED(hres)) {
         if(hres == DISP_E_TYPEMISMATCH) {

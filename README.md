@@ -304,7 +304,7 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 - [Bug 55931](https://bugs.winehq.org/show_bug.cgi?id=55931) — vbscript: empty MOD 100000 returns garbage instead of 0 [9.0-rc1](https://gitlab.winehq.org/wine/wine/-/merge_requests/4515)
 - [Bug 55969](https://bugs.winehq.org/show_bug.cgi?id=55969) — vbscript fails to return TypeName for Nothing [9.0-rc1](https://gitlab.winehq.org/wine/wine/-/merge_requests/4564)
 - [Bug 56139](https://bugs.winehq.org/show_bug.cgi?id=56139) — scrrun: Dictionary does not allow storing at key Undefined [9.3](https://gitlab.winehq.org/wine/wine/-/merge_requests/4778)
-- [Bug 56281](https://bugs.winehq.org/show_bug.cgi?id=56281) — string number converted to ascii value instead of parsed value [11.8](https://gitlab.winehq.org/wine/wine/-/merge_requests/10314)
+- [Bug 56281](https://bugs.winehq.org/show_bug.cgi?id=56281) — string number converted to ascii value instead of parsed value [11.8](https://gitlab.winehq.org/wine/wine/-/merge_requests/10314) [11.9](https://gitlab.winehq.org/wine/wine/-/merge_requests/10775)
 - [Bug 56464](https://bugs.winehq.org/show_bug.cgi?id=56464) — vbscript: Join on array with "empty" items fails [10.2](https://gitlab.winehq.org/wine/wine/-/merge_requests/7304)
 - [Bug 56480](https://bugs.winehq.org/show_bug.cgi?id=56480) — underscore line continue issues [11.5](https://gitlab.winehq.org/wine/wine/-/merge_requests/10312)
 - [Bug 56781](https://bugs.winehq.org/show_bug.cgi?id=56781) — scrrun: Dictionary setting item to object fails [9.11](https://gitlab.winehq.org/wine/wine/-/merge_requests/5795)
