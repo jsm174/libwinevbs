@@ -671,6 +671,17 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
     return return_short(res, ret);
 }
 
+/* Cxxx() coercion functions raise err 94 (Illegal Null use) on Null and
+ * err 91 (Object variable not set) on Nothing, matching native VBScript. */
+static HRESULT check_coerce_arg(const VARIANT *arg)
+{
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    if(V_VT(arg) == VT_DISPATCH && !V_DISPATCH(arg))
+        return MAKE_VBSERROR(VBSE_OBJECT_VARIABLE_NOT_SET);
+    return S_OK;
+}
+
 static HRESULT Global_CCur(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     VARIANT v;
@@ -679,6 +690,10 @@ static HRESULT Global_CCur(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
+
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_CY);
@@ -703,6 +718,10 @@ static HRESULT Global_CInt(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
+
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_I2);
     if(FAILED(hres))
@@ -725,6 +744,10 @@ static HRESULT Global_CLng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
+
     hres = to_int(arg, &i);
     if(FAILED(hres))
         return hres;
@@ -742,6 +765,10 @@ static HRESULT Global_CBool(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
+
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, VARIANT_LOCALBOOL, VT_BOOL);
@@ -763,6 +790,10 @@ static HRESULT Global_CByte(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
+
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, VARIANT_LOCALBOOL, VT_UI1);
@@ -787,8 +818,9 @@ static HRESULT Global_CDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
     assert(args_cnt == 1);
 
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_DATE);
@@ -816,6 +848,10 @@ static HRESULT Global_CDbl(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
+
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_R8);
     if(FAILED(hres))
@@ -838,6 +874,10 @@ static HRESULT Global_CSng(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     assert(args_cnt == 1);
 
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
+
     V_VT(&v) = VT_EMPTY;
     hres = VariantChangeType(&v, arg, 0, VT_R4);
     if(FAILED(hres))
@@ -857,8 +897,9 @@ static HRESULT Global_CStr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
     TRACE("%s\n", debugstr_variant(arg));
 
-    if(V_VT(arg) == VT_NULL)
-        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+    hres = check_coerce_arg(arg);
+    if(FAILED(hres))
+        return hres;
 
     hres = to_string(This->ctx->lcid, arg, &str);
     if(FAILED(hres))
@@ -3076,7 +3117,6 @@ static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *args, unsigned args_c
 
     return return_int(res, result);
 }
-
 
 static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
