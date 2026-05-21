@@ -6546,21 +6546,15 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
 static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
                                     BSTR* pbstrOut, int ndigits)
 {
-#ifndef __LIBWINEVBS__
   _locale_t locale;
-#endif
   WCHAR *e, buff[256];
   int len;
 
   if (!pbstrOut)
     return E_INVALIDARG;
 
-#ifndef __LIBWINEVBS__
   if (!(locale = _create_locale(LC_ALL, "C"))) return E_OUTOFMEMORY;
   len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*G", locale, ndigits, dblIn);
-#else
-  len = swprintf(buff, ARRAY_SIZE(buff), L"%.*G", ndigits, dblIn);
-#endif
   e = wcschr(buff, 'E');
   if (e)
   {
@@ -6571,18 +6565,12 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
       extra_decimals = dot ? e - dot - 2 : 0;
       if (labs(wcstol(e+1, NULL, 10)) + extra_decimals < ndigits)
       {
-#ifndef __LIBWINEVBS__
           len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*f", locale, ndigits, dblIn);
-#else
-          len = swprintf(buff, ARRAY_SIZE(buff), L"%.*f", ndigits, dblIn);
-#endif          
           while (len > 0 && (buff[len-1] == '0')) len--;
       }
   }
   buff[len] = 0;
-#ifndef __LIBWINEVBS__
   _free_locale(locale);
-#endif
 
   /* Negative zeroes are disallowed (some applications depend on this).
      If buff starts with a minus, and then nothing follows but zeroes
@@ -6855,7 +6843,6 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 
   *pbstrOut = NULL;
 
-#ifndef __LIBWINEVBS__
   if (dwFlags & VAR_CALENDAR_THAI)
       st.wYear += 553; /* Use the Thai buddhist calendar year */
   else if (dwFlags & (VAR_CALENDAR_HIJRI|VAR_CALENDAR_GREGORIAN))
@@ -6889,11 +6876,6 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
     if (!GetTimeFormatW(lcid, dwFormatFlags, &st, NULL, time, ARRAY_SIZE(date)-(time-date)))
       return E_INVALIDARG;
   }
-#else
-    swprintf(date, ARRAY_SIZE(date), L"%02d/%02d/%04d %02d:%02d:%02d",
-             st.wMonth, st.wDay, st.wYear,
-             st.wHour, st.wMinute, st.wSecond);
-#endif
 
   *pbstrOut = SysAllocString(date);
   if (*pbstrOut)

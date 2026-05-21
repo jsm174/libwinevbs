@@ -182,11 +182,47 @@ typedef enum DPI_AWARENESS
  #undef wcsncpy
  #include <wctype.h>
  #include <wchar.h>
+ #include <locale.h>
+ #include <stdarg.h>
  #ifndef _WIN32
   int wcsicmp( LPCWSTR str1, LPCWSTR str2 );
   int wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n );
   WCHAR *wcslwr( WCHAR *str );
+  /* MSVC per-locale CRT helpers Wine's oleaut32/vbscript call directly. */
+  typedef locale_t _locale_t;
+  #define _free_locale freelocale
+  static inline _locale_t _create_locale( int category, const char *name )
+  {
+      (void)category;
+      return newlocale( LC_ALL_MASK, name, (locale_t)0 );
+  }
+  static inline double _wcstod_l( const WCHAR *str, WCHAR **endptr, _locale_t loc )
+  {
+      locale_t old = uselocale( loc );
+      double r = wcstod( str, endptr );
+      uselocale( old );
+      return r;
+  }
  #endif
+ /* mingw-ucrt provides the _l helpers above but not _swprintf_l, so define it for
+  * all targets. Callers only pass the "C" locale (to force a '.' decimal). */
+ static inline int _swprintf_l( WCHAR *buffer, size_t count, const WCHAR *format, _locale_t loc, ... )
+ {
+     va_list args;
+     int ret;
+ #ifndef _WIN32
+     locale_t old = uselocale( loc );
+ #else
+     (void)loc;
+ #endif
+     va_start( args, loc );
+     ret = vswprintf( buffer, count, format, args );
+     va_end( args );
+ #ifndef _WIN32
+     uselocale( old );
+ #endif
+     return ret;
+ }
 #endif
 #ifdef __cplusplus
 }
