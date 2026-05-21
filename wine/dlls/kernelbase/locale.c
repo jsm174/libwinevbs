@@ -36,6 +36,9 @@
 #include "winternl.h"
 #include "kernelbase.h"
 #include "wine/debug.h"
+#ifdef __LIBWINEVBS__
+#include "libwinevbs_nls.h"
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
@@ -742,6 +745,7 @@ static const struct sortguid *get_language_sort( const WCHAR *name )
  */
 const NLS_LOCALE_DATA * WINAPI NlsValidateLocale( LCID *lcid, ULONG flags )
 {
+#ifndef __LIBWINEVBS__
     const NLS_LOCALE_LCNAME_INDEX *name_entry;
     const NLS_LOCALE_LCID_INDEX *entry;
     const NLS_LOCALE_DATA *locale;
@@ -766,6 +770,12 @@ const NLS_LOCALE_DATA * WINAPI NlsValidateLocale( LCID *lcid, ULONG flags )
             locale = get_locale_data( name_entry->idx );
         return locale;
     }
+#else
+    /* locale.nls is not mapped; hand back a zeroed, never-dereferenced sentinel so
+     * the NLS consumers proceed and reach the intercepted get_locale_info(). */
+    static const NLS_LOCALE_DATA libwinevbs_dummy_locale;
+    return &libwinevbs_dummy_locale;
+#endif
 }
 
 
@@ -1141,6 +1151,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     UINT val;
     int ret;
 
+#ifndef __LIBWINEVBS__
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
 
     switch (LOWORD(type))
@@ -1630,6 +1641,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     }
     SetLastError( ERROR_INVALID_FLAGS );
     return 0;
+#else
+    /* locale.nls is not mapped; serve the host user locale instead. */
+    return libwinevbs_get_locale_info( lcid, type, buffer, len );
+#endif
 }
 
 

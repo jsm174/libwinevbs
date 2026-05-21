@@ -113,6 +113,7 @@ set(LIBWINEVBS_SOURCES
    wine/dlls/atl/atl.c
 
    wine/dlls/kernelbase/locale.c
+   wine/dlls/kernelbase/libwinevbs_nls.c
 )
 
 set(LIBWINEVBS_INCLUDE_DIRS
