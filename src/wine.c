@@ -1351,6 +1351,15 @@ HANDLE WINAPI FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileDa
    for (int i = 0; path[i]; ++i)
       if (path[i] == '\\') path[i] = '/';
 
+   /* A bare drive prefix like "Z:" is not a valid POSIX path; opendir
+    * fails on it. Treat it as the drive root so component-by-component
+    * walks (e.g. FSO GetAbsolutePathName) resolve. */
+   size_t plen = strlen(path);
+   if (plen == 2 && path[1] == ':') {
+      path[2] = '/';
+      path[3] = '\0';
+   }
+
    DIR *dir = opendir(path);
    if (!dir && resolve_path_ci(path))
       dir = opendir(path);
