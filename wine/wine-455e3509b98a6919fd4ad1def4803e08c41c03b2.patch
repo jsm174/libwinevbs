@@ -1,3 +1,4 @@
+# libwinevbs-only: wine-455e3509b98a6919fd4ad1def4803e08c41c03b2.patch
 --- wine/include/winternl.h
 +++ libwinevbs/include/winternl.h
 @@ -21,7 +21,22 @@
@@ -281,7 +282,7 @@
  /*
 --- wine/include/winbase.h
 +++ libwinevbs/include/winbase.h
-@@ -2468,12 +2468,14 @@
+@@ -2469,12 +2469,14 @@
      return strcat( dst, src );
  }
  
@@ -668,18 +669,7 @@
  
  static HRESULT WINAPI textstream_get_Line(ITextStream *iface, LONG *line)
  {
-@@ -489,7 +502,10 @@
-     if (stream->eof) return S_OK;
- 
-     if (!ReadFile(stream->file, buf, sizeof(buf), &read, NULL))
-+    {
-+        ITextStream_Release(&stream->ITextStream_iface);
-         return create_error(GetLastError());
-+    }
- 
-     stream->eof = read != sizeof(buf);
-     return append_read_data(stream, buf, read);
-@@ -1054,8 +1070,13 @@
+@@ -1054,8 +1067,13 @@
      return get_typeinfo(IDrive_tid, ppTInfo);
  }
  
@@ -693,7 +683,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -1072,10 +1093,17 @@
+@@ -1072,10 +1090,17 @@
  
      return hr;
  }
@@ -711,7 +701,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -1094,6 +1122,7 @@
+@@ -1094,6 +1119,7 @@
  
      return hr;
  }
@@ -719,7 +709,7 @@
  
  static HRESULT WINAPI drive_get_Path(IDrive *iface, BSTR *path)
  {
-@@ -1887,8 +1916,13 @@
+@@ -1887,8 +1913,13 @@
      return get_typeinfo(IFolderCollection_tid, ppTInfo);
  }
  
@@ -733,7 +723,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -1905,10 +1939,17 @@
+@@ -1905,10 +1936,17 @@
  
      return hr;
  }
@@ -751,7 +741,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -1927,6 +1968,7 @@
+@@ -1927,6 +1965,7 @@
  
      return hr;
  }
@@ -759,7 +749,7 @@
  
  static HRESULT WINAPI foldercoll_Add(IFolderCollection *iface, BSTR name, IFolder **folder)
  {
-@@ -2089,8 +2131,13 @@
+@@ -2089,8 +2128,13 @@
      return get_typeinfo(IFileCollection_tid, ppTInfo);
  }
  
@@ -773,7 +763,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2107,10 +2154,17 @@
+@@ -2107,10 +2151,17 @@
  
      return hr;
  }
@@ -791,7 +781,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2129,6 +2183,7 @@
+@@ -2129,6 +2180,7 @@
  
      return hr;
  }
@@ -799,7 +789,7 @@
  
  static HRESULT WINAPI filecoll_get_Item(IFileCollection *iface, VARIANT Key, IFile **file)
  {
-@@ -2279,8 +2334,13 @@
+@@ -2279,8 +2331,13 @@
      return get_typeinfo(IDriveCollection_tid, ppTInfo);
  }
  
@@ -813,7 +803,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2297,10 +2357,17 @@
+@@ -2297,10 +2354,17 @@
  
      return hr;
  }
@@ -831,7 +821,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2319,6 +2386,7 @@
+@@ -2319,6 +2383,7 @@
  
      return hr;
  }
@@ -839,7 +829,7 @@
  
  static HRESULT WINAPI drivecoll_get_Item(IDriveCollection *iface, VARIANT key, IDrive **drive)
  {
-@@ -2453,8 +2521,13 @@
+@@ -2453,8 +2518,13 @@
      return get_typeinfo(IFolder_tid, ppTInfo);
  }
  
@@ -853,7 +843,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2471,10 +2544,17 @@
+@@ -2471,10 +2541,17 @@
  
      return hr;
  }
@@ -871,7 +861,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2493,6 +2573,7 @@
+@@ -2493,6 +2570,7 @@
  
      return hr;
  }
@@ -879,7 +869,7 @@
  
  static HRESULT WINAPI folder_get_Path(IFolder *iface, BSTR *path)
  {
-@@ -2961,7 +3042,11 @@
+@@ -2961,7 +3039,11 @@
      return get_typeinfo(IFile_tid, ppTInfo);
  }
  
@@ -891,7 +881,7 @@
          LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -2977,8 +3062,13 @@
+@@ -2977,8 +3059,13 @@
      }
      return hr;
  }
@@ -905,7 +895,7 @@
          DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -2996,6 +3086,7 @@
+@@ -2996,6 +3083,7 @@
      }
      return hr;
  }
@@ -913,7 +903,7 @@
  
  static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *path)
  {
-@@ -3431,8 +3522,13 @@
+@@ -3431,8 +3519,13 @@
      return get_typeinfo(IFileSystem3_tid, ppTInfo);
  }
  
@@ -927,7 +917,7 @@
                                          LCID lcid, DISPID *rgDispId)
  {
      ITypeInfo *typeinfo;
-@@ -3449,10 +3545,17 @@
+@@ -3449,10 +3542,17 @@
  
      return hr;
  }
@@ -945,7 +935,7 @@
                                        EXCEPINFO *pExcepInfo, UINT *puArgErr)
  {
      ITypeInfo *typeinfo;
-@@ -3471,6 +3574,7 @@
+@@ -3471,6 +3571,7 @@
  
      return hr;
  }
@@ -953,7 +943,7 @@
  
  static HRESULT WINAPI filesys_get_Drives(IFileSystem3 *iface, IDriveCollection **ppdrives)
  {
-@@ -4469,3 +4573,7 @@
+@@ -4469,3 +4570,7 @@
      init_classinfo(&CLSID_FileSystemObject, (IUnknown *)&filesystem.IFileSystem3_iface, &filesystem.classinfo);
      return IFileSystem3_QueryInterface(&filesystem.IFileSystem3_iface, riid, ppv);
  }
@@ -2269,7 +2259,7 @@
  static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
 --- wine/dlls/vbscript/interp.c
 +++ libwinevbs/dlls/vbscript/interp.c
-@@ -2107,6 +2107,20 @@
+@@ -2053,6 +2053,20 @@
      }else {
          named_item_t *item;
          disp = NULL;
@@ -2410,7 +2400,21 @@
      return SysAllocString(buf);
  }
  
-@@ -258,6 +367,7 @@
+@@ -62,7 +171,13 @@
+     struct list *list;
+     void *tmp;
+ 
++#ifdef __LIBWINEVBS__
++    /* round to 8 bytes, VARIANT needs it on 64 bit */
++    size = (size+7)&~7;
++    heap->offset = (heap->offset+7)&~7;
++#else
+     size = (size+3)&~3;
++#endif
+ 
+     if(!heap->block_cnt) {
+         if(!heap->blocks) {
+@@ -258,6 +373,7 @@
  /******************************************************************
   *              DllMain (vbscript.@)
   */
@@ -2418,7 +2422,7 @@
  BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  {
      TRACE("(%p %ld %p)\n", hInstDLL, fdwReason, lpv);
-@@ -277,10 +387,12 @@
+@@ -277,10 +393,12 @@
  
      return TRUE;
  }
@@ -2431,7 +2435,7 @@
  HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  {
      if(IsEqualGUID(&CLSID_VBScript, rclsid)) {
-@@ -294,3 +406,4 @@
+@@ -294,3 +412,4 @@
      FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
      return CLASS_E_CLASSNOTAVAILABLE;
  }
@@ -2756,7 +2760,7 @@
  WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
  
  #define VB_E_CANNOT_CREATE_OBJ 0x800a01ad
-@@ -536,6 +543,7 @@
+@@ -537,6 +544,7 @@
      if(FAILED(hres))
          return NULL;
  
@@ -2764,7 +2768,7 @@
      hres = IClassFactory_QueryInterface(cf, &IID_IClassFactoryEx, (void**)&cfex);
      if(SUCCEEDED(hres)) {
          FIXME("Use IClassFactoryEx\n");
-@@ -543,6 +551,22 @@
+@@ -544,6 +552,22 @@
      }
  
      hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
@@ -2787,7 +2791,7 @@
      if(FAILED(hres))
          return NULL;
  
-@@ -2804,8 +2828,16 @@
+@@ -2805,8 +2829,16 @@
          hres = E_NOTIMPL;
      }
  
