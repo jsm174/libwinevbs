@@ -406,6 +406,14 @@ Using the Wine VBScript engine source for Visual Pinball has surfaced a large nu
 - vbscript: Treat a dot right after a keyword as a with-statement dot. [11.17](https://gitlab.winehq.org/wine/wine/-/merge_requests/11820)
 - vbscript: Return "Object not a collection" for For Each on Nothing. [11.17](https://gitlab.winehq.org/wine/wine/-/merge_requests/11831)
 - vbscript: Initialize the function pointer before the recursion limit check. [11.17](https://gitlab.winehq.org/wine/wine/-/merge_requests/11837)
+- vbscript: vbscript: Free fixed-size array data on release. [11.18](https://gitlab.winehq.org/wine/wine/-/merge_requests/11976)
+- vbscript: Report a syntax error for overflowing hex and octal literals. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12060)
+- vbscript: Treat unused reserved words as keywords. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12061)
+- vbscript: Allow keywords that are valid identifiers as ReDim variable names. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12063)
+- vbscript: Don't assert on non-assignable assignment targets. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12064)
+- vbscript: Implement Erase as a builtin procedure instead of a statement. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12065)
+- vbscript: Fix indexing an array named default or property. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12067)
+- vbscript: Match native "Name redefined" handling for parameters, locals, ReDim and class members. [11.19](https://gitlab.winehq.org/wine/wine/-/merge_requests/12070)
 - scrrun/dictionary: Match native semantics for Empty and Boolean keys. [11.11](https://gitlab.winehq.org/wine/wine/-/merge_requests/10960)
 
 ### Enhancements
