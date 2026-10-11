@@ -485,11 +485,18 @@ static void skip_spaces(parser_ctx_t *ctx)
 
 static int comment_line(parser_ctx_t *ctx)
 {
+#ifdef __LIBWINEVBS__
+    while(ctx->ptr < ctx->end && *ctx->ptr != '\n' && *ctx->ptr != '\r')
+        ctx->ptr++;
+    if(ctx->ptr < ctx->end)
+        ctx->ptr++;
+#else
     ctx->ptr = wcspbrk(ctx->ptr, L"\n\r");
     if(ctx->ptr)
         ctx->ptr++;
     else
         ctx->ptr = ctx->end;
+#endif
     return tNL;
 }
 
