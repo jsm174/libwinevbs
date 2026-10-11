@@ -4137,8 +4137,14 @@ static HRESULT WINAPI filesys_MoveFolder(IFileSystem3 *iface, BSTR src, BSTR dst
     if (src[src_len - 1] == '\\' || src[src_len - 1] == '/')
         return CTL_E_ILLEGALFUNCTIONCALL;
 
+#ifdef __LIBWINEVBS__
+    for (int i = 0; i < src_len; i++)
+        if (src[i] == '*' || src[i] == '?' || src[i] == '>' || src[i] == '<')
+            wildcard = TRUE;
+#else
     if (wcspbrk(src, L"*?><"))
         wildcard = TRUE;
+#endif
 
     dst_len = SysStringLen(dst);
     if (dst[dst_len - 1] == '\\' || dst[dst_len - 1] == '/')

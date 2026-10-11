@@ -943,7 +943,22 @@
  
  static HRESULT WINAPI filesys_get_Drives(IFileSystem3 *iface, IDriveCollection **ppdrives)
  {
-@@ -4469,3 +4570,7 @@
+@@ -4036,8 +4137,14 @@
+     if (src[src_len - 1] == '\\' || src[src_len - 1] == '/')
+         return CTL_E_ILLEGALFUNCTIONCALL;
+ 
++#ifdef __LIBWINEVBS__
++    for (int i = 0; i < src_len; i++)
++        if (src[i] == '*' || src[i] == '?' || src[i] == '>' || src[i] == '<')
++            wildcard = TRUE;
++#else
+     if (wcspbrk(src, L"*?><"))
+         wildcard = TRUE;
++#endif
+ 
+     dst_len = SysStringLen(dst);
+     if (dst[dst_len - 1] == '\\' || dst[dst_len - 1] == '/')
+@@ -4469,3 +4576,7 @@
      init_classinfo(&CLSID_FileSystemObject, (IUnknown *)&filesystem.IFileSystem3_iface, &filesystem.classinfo);
      return IFileSystem3_QueryInterface(&filesystem.IFileSystem3_iface, riid, ppv);
  }
@@ -2257,6 +2272,27 @@
  }
  
  static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
+--- wine/dlls/vbscript/lex.c
++++ libwinevbs/dlls/vbscript/lex.c
+@@ -485,11 +485,18 @@
+ 
+ static int comment_line(parser_ctx_t *ctx)
+ {
++#ifdef __LIBWINEVBS__
++    while(ctx->ptr < ctx->end && *ctx->ptr != '\n' && *ctx->ptr != '\r')
++        ctx->ptr++;
++    if(ctx->ptr < ctx->end)
++        ctx->ptr++;
++#else
+     ctx->ptr = wcspbrk(ctx->ptr, L"\n\r");
+     if(ctx->ptr)
+         ctx->ptr++;
+     else
+         ctx->ptr = ctx->end;
++#endif
+     return tNL;
+ }
+ 
 --- wine/dlls/vbscript/interp.c
 +++ libwinevbs/dlls/vbscript/interp.c
 @@ -2053,6 +2053,20 @@
