@@ -1,4 +1,3 @@
-# libwinevbs-only: wine-455e3509b98a6919fd4ad1def4803e08c41c03b2.patch
 --- wine/include/winternl.h
 +++ libwinevbs/include/winternl.h
 @@ -21,7 +21,22 @@
@@ -59,7 +58,7 @@
  
  /* Eliminate Microsoft C/C++ compiler warning 4715 */
  #ifdef _MSC_VER
-@@ -2576,6 +2588,7 @@
+@@ -2699,6 +2711,7 @@
  
  struct _TEB;
  
@@ -67,7 +66,7 @@
  #ifdef WINE_UNIX_LIB
  # ifdef __GNUC__
  NTSYSAPI struct _TEB * WINAPI NtCurrentTeb(void) __attribute__((pure));
-@@ -2637,6 +2650,13 @@
+@@ -2760,6 +2773,13 @@
  #elif !defined(RC_INVOKED)
  # error You must define NtCurrentTeb() for your architecture
  #endif
@@ -81,7 +80,7 @@
  
  #ifdef NONAMELESSUNION
  #define GetCurrentFiber()  (((NT_TIB *)NtCurrentTeb())->u.FiberData)
-@@ -8047,6 +8067,7 @@
+@@ -8291,6 +8311,7 @@
  #endif
  }
  
@@ -89,7 +88,7 @@
  static FORCEINLINE DECLSPEC_NORETURN void __fastfail(unsigned int code)
  {
  #if defined(__aarch64__) || defined(__arm64ec__)
-@@ -8059,6 +8080,7 @@
+@@ -8303,6 +8324,7 @@
      for (;;) __asm__ __volatile__( "udf #0xfb" :: "r" (val) : "memory" );
  #endif
  }
@@ -282,7 +281,7 @@
  /*
 --- wine/include/winbase.h
 +++ libwinevbs/include/winbase.h
-@@ -2469,12 +2469,14 @@
+@@ -2488,12 +2488,14 @@
      return strcat( dst, src );
  }
  
@@ -297,7 +296,6 @@
  #endif
  
  #endif /* !defined(__WINESRC__) || defined(WINE_NO_INLINE_STRING) */
-# libwinevbs-only: wine-36b6a2cf679fb395f668a917b76537190e212d9c.patch
 --- wine/dlls/atl/atl.c
 +++ libwinevbs/dlls/atl/atl.c
 @@ -968,6 +968,7 @@
@@ -2274,7 +2272,7 @@
  static HRESULT WINAPI DispatchEx_GetIDsOfNames(IDispatchEx *iface, REFIID riid,
 --- wine/dlls/vbscript/lex.c
 +++ libwinevbs/dlls/vbscript/lex.c
-@@ -485,11 +485,18 @@
+@@ -508,11 +508,18 @@
  
  static int comment_line(parser_ctx_t *ctx)
  {
@@ -2691,7 +2689,7 @@
  
      ret = calloc(1, sizeof(*ret));
      if(!ret)
-@@ -1143,11 +1206,20 @@
+@@ -1143,12 +1206,21 @@
  
      TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
  
@@ -2706,12 +2704,13 @@
  }
  
 +#ifdef __LIBWINEVBS__
-+static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
+ static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
 +        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId);
 +#else
- static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
++static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
          LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
  {
+     RegExp2 *This = impl_from_IRegExp2(iface);
 @@ -1158,9 +1230,15 @@
  
      return ITypeInfo_GetIDsOfNames(typeinfos[RegExp2_tid], rgszNames, cNames, rgDispId);
@@ -2898,3 +2897,4 @@
  
  /***********************************************************************
   *		DllRegisterServer (OLEAUT32.@)
+# libwinevbs-only: wine-7298a818b79446bae153b8d5aa27235ab3703bf9.patch
